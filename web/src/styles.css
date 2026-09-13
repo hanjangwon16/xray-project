@@ -1,0 +1,26 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, 'Pretendard', 'Noto Sans KR', sans-serif;
+  background: #0f1115; color: #e8e9ec; }
+.app { max-width: 1400px; margin: 0 auto; padding: 16px; }
+header h1 { margin: 0; font-size: 22px; }
+header p { margin: 4px 0 16px; color: #9aa0ab; font-size: 13px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.panel { background: #171a21; border: 1px solid #262b36; border-radius: 10px; padding: 10px; }
+.panel h2 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #c7ccd6; display: flex; justify-content: space-between; align-items: center; }
+.panel h2 .inline { font-size: 12px; font-weight: 400; color: #8a919d; display: flex; align-items: center; gap: 4px; }
+.vpwrap { position: relative; width: 100%; aspect-ratio: 1; }
+.vp { position: absolute; inset: 0; }
+.vp canvas { width: 100% !important; height: 100% !important; }
+input[type=range] { width: 100%; margin-top: 8px; accent-color: #4a9eff; }
+.drr { margin-top: 12px; }
+.drrimg { width: 360px; image-rendering: auto; display: block; border-radius: 6px; border: 1px solid #333a48; }
+.controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; margin: 10px 0; }
+.controls label { font-size: 13px; color: #aeb4bf; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.presets button { background: #22262f; color: #c7ccd6; border: 1px solid #333a48; border-radius: 6px;
+  padding: 5px 12px; font-size: 12px; cursor: pointer; }
+.presets button:hover { background: #2c3140; }
+.presets button.active { background: #2b4a75; border-color: #4a9eff; color: #fff; }
+.hint { font-size: 11px; color: #6d7480; margin: 6px 0 0; }
+.meta { color: #8a919d; font-size: 12px; }
+footer { margin-top: 16px; color: #7c828d; font-size: 12px; }
