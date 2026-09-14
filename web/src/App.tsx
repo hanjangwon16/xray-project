@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { loadCase, type Volume } from './volume';
-import { buildImageData, buildLabelData, createSliceView, createVolumeView, setSlicePosition, updateBeam, updateCrosshair, setSliceWindow, type SliceView, type VolumeView } from './vtkSetup';
+import { buildImageData, buildLabelData, createSliceView, createVolumeView, setSlicePosition, updateBeam, updateCrosshair, setSliceWindow, updateSlicePlanes, type SliceView, type VolumeView } from './vtkSetup';
 import { computeBeam } from './beam';
 import { labelColor } from './labels';
 import type { DrrRequest, DrrResponse, ViewName } from './types';
 
-const CASE_ID = 'example_ct_sm';
+const CASES = [{ id: 'example_ct', name: '전체 흉·복부 CT' }, { id: 'example_ct_sm', name: '상복부 CT (라벨)' }];
 
 interface Preset { name: string; yaw: number; pitch: number; roll: number; desc: string }
 const PRESETS: Preset[] = [
@@ -31,6 +31,7 @@ export default function App() {
   const [tint, setTint] = useState(true);
   const [xrayTab, setXrayTab] = useState<'drr' | 'pos'>('drr');
   const [winPreset, setWinPreset] = useState<string>('기본');
+  const [caseId, setCaseId] = useState('example_ct');
 
   const WINDOWS: Record<string, [number, number]> = {
     '기본': [2307, 53], '뼈': [2000, 400], '폐': [1600, -600], '연조직': [400, 40],
@@ -52,7 +53,13 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    loadCase(CASE_ID).then((v) => {
+    // clear previous views
+    for (const el of [axialRef.current, coronalRef.current, sagittalRef.current, volRef.current]) {
+      if (el) el.innerHTML = '';
+    }
+    viewsRef.current = null; volViewRef.current = null;
+    workerRef.current?.terminate();
+    loadCase(caseId).then((v) => {
       if (cancelled) return;
       setVol(v);
       const imageData = buildImageData(v);
@@ -90,7 +97,7 @@ export default function App() {
       workerRef.current = w;
     });
     return () => { cancelled = true; workerRef.current?.terminate(); };
-  }, []);
+  }, [caseId]);
 
   // re-render tint when toggled (worker holds last result; just re-request)
   useEffect(() => {
@@ -99,7 +106,7 @@ export default function App() {
     const lcopy = vol.labels ? vol.labels.slice().buffer : null;
     const sdd = sid * 1.15;
     const req: DrrRequest = {
-      type: 'render', caseId: CASE_ID, buffer: copy, labelBuffer: lcopy,
+      type: 'render', caseId: caseId, buffer: copy, labelBuffer: lcopy,
       dims: vol.meta.dims, spacing: vol.meta.spacing,
       yawDeg: yaw, pitchDeg: pitch, rollDeg: roll, sid, sdd, outSize: 200, stepMm: 2.5,
     };
@@ -129,6 +136,7 @@ export default function App() {
     updateCrosshair(viewsRef.current.axial, world, b);
     updateCrosshair(viewsRef.current.coronal, world, b);
     updateCrosshair(viewsRef.current.sagittal, world, b);
+    if (volViewRef.current) updateSlicePlanes(volViewRef.current, world, b);
   }, [slices, vol]);
 
   useEffect(() => {
@@ -160,7 +168,7 @@ export default function App() {
       <header>
         <h1>X-ray <span className="accent">Anatomy Lab</span></h1>
         <span className="sub">CT 단면 · 3D 구조 · 가상 X-ray 연동 학습 시뮬레이터</span>
-        <span className="badge">교육용 · 비진단</span>
+        <select className="winsel" value={caseId} onChange={(e) => setCaseId(e.target.value)}>{CASES.map((cs) => <option key={cs.id} value={cs.id}>{cs.name}</option>)}</select><span className="badge">교육용 · 비진단</span>
       </header>
       <main className="layout">
         {/* left: 3 CT slices */}

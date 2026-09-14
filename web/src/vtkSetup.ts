@@ -81,10 +81,7 @@ export function createSliceView(
 
   const mapper = vtkImageResliceMapper.newInstance();
   mapper.setInputData(imageData);
-  const plane = vtkPlane.newInstance({
-    normal: VIEW_NORMALS[view],
-    origin: [0, 0, 0],
-  });
+  const plane = vtkPlane.newInstance({ normal: VIEW_NORMALS[view], origin: [0, 0, 0] });
   mapper.setSlicePlane(plane);
 
   const actor = vtkImageSlice.newInstance();
@@ -100,11 +97,7 @@ export function createSliceView(
   camera.setParallelProjection(true);
   const n = VIEW_NORMALS[view];
   const b = imageData.getBounds();
-  const c: [number, number, number] = [
-    (b[0] + b[1]) / 2,
-    (b[2] + b[3]) / 2,
-    (b[4] + b[5]) / 2,
-  ];
+  const c: [number, number, number] = [(b[0] + b[1]) / 2, (b[2] + b[3]) / 2, (b[4] + b[5]) / 2];
   camera.setFocalPoint(c[0], c[1], c[2]);
   camera.setPosition(c[0] + n[0] * 500, c[1] + n[1] * 500, c[2] + n[2] * 500);
   if (view === 'axial') camera.setViewUp(0, -1, 0);
@@ -114,7 +107,6 @@ export function createSliceView(
   const istyle = vtkInteractorStyleImage.newInstance();
   grw.getInteractor().setInteractorStyle(istyle);
 
-  // crosshair lines (in-plane)
   const chColor: Record<ViewName, [number, number, number]> = {
     axial: [0.2, 0.9, 0.5], coronal: [0.95, 0.8, 0.2], sagittal: [0.5, 0.7, 1.0],
   };
@@ -135,7 +127,13 @@ export function createSliceView(
   return { container, grw, mapper, plane, actor, crosshair, view };
 }
 
-// Update crosshair lines on a slice view to intersect at world point.
+export function setSlicePosition(sv: SliceView, world: [number, number, number]) {
+  sv.plane.setOrigin(world);
+  sv.plane.modified();
+  sv.mapper.modified();
+  sv.grw.getRenderWindow().render();
+}
+
 export function updateCrosshair(sv: SliceView, world: [number, number, number], bounds: number[]) {
   const [xmin, xmax, ymin, ymax, zmin, zmax] = bounds;
   const [x, y, z] = world;
@@ -170,30 +168,28 @@ export function setSliceWindow(sv: SliceView, w: number, l: number) {
   sv.grw.getRenderWindow().render();
 }
 
-export function setSlicePosition(sv: SliceView, world: [number, number, number]) {
-  sv.plane.setOrigin(world);
-  sv.plane.modified();
-  sv.mapper.modified();
-  sv.grw.getRenderWindow().render();
-}
+// ---------- 3D anatomy view ----------
 
 export interface VolumeView {
   container: HTMLDivElement;
   grw: ReturnType<typeof vtkGenericRenderWindow.newInstance>;
   beamActors: ReturnType<typeof vtkActor.newInstance>[];
+  slicePlanes: Record<ViewName, ReturnType<typeof vtkActor.newInstance>>;
   renderer: ReturnType<ReturnType<typeof vtkGenericRenderWindow.newInstance>['getRenderer']>;
 }
 
-// Major structures to show as separate colored surfaces in 3D.
+// HU-based iso-surfaces: skin, lung, bone. Labelmap adds detail when present.
+const HU_SURFACES: { hu: number; name: string; color: [number, number, number]; opacity: number }[] = [
+  { hu: -400, name: '피부', color: [0.88, 0.72, 0.6], opacity: 0.10 },
+  { hu: -500, name: '폐', color: [0.5, 0.7, 0.95], opacity: 0.30 },
+  { hu: 300, name: '뼈', color: [0.87, 0.83, 0.76], opacity: 0.85 },
+  { hu: 60, name: '연조직', color: [0.8, 0.45, 0.4], opacity: 0.18 },
+];
+
 const SURFACE_LABELS: { id: number; name: string; color: [number, number, number]; opacity: number }[] = [
-  { id: 52, name: '심장', color: [0.9, 0.25, 0.3], opacity: 0.85 },
-  { id: 30, name: '우상엽', color: [0.55, 0.7, 0.95], opacity: 0.4 },
-  { id: 31, name: '우중엽', color: [0.6, 0.75, 0.95], opacity: 0.4 },
-  { id: 32, name: '우하엽', color: [0.5, 0.65, 0.92], opacity: 0.4 },
-  { id: 33, name: '좌상엽', color: [0.55, 0.8, 0.9], opacity: 0.4 },
-  { id: 7, name: '대동맥', color: [0.95, 0.3, 0.3], opacity: 0.8 },
-  { id: 5, name: '간', color: [0.8, 0.5, 0.25], opacity: 0.7 },
-  { id: 1, name: '비장', color: [0.85, 0.35, 0.35], opacity: 0.7 },
+  { id: 52, name: '심장', color: [0.9, 0.25, 0.3], opacity: 0.9 },
+  { id: 7, name: '대동맥', color: [0.95, 0.3, 0.3], opacity: 0.85 },
+  { id: 5, name: '간', color: [0.8, 0.5, 0.25], opacity: 0.75 },
 ];
 
 export function createVolumeView(
@@ -207,21 +203,26 @@ export function createVolumeView(
   const grw = vtkGenericRenderWindow.newInstance({ listenWindowResize: false });
   grw.setContainer(container);
   grw.resize();
-
-  const mc = vtkImageMarchingCubes.newInstance({ contourValue: 300, computeNormals: true, mergePoints: true });
-  mc.setInputData(imageData);
-  const mapper = vtkMapper.newInstance();
-  mapper.setInputConnection(mc.getOutputPort());
-  const actor = vtkActor.newInstance();
-  actor.setMapper(mapper);
-  actor.getProperty().setColor(0.85, 0.82, 0.75);
-  actor.getProperty().setOpacity(0.18);
-
   const renderer = grw.getRenderer();
-  renderer.addActor(actor);
-  renderer.setBackground(0.08, 0.09, 0.12);
+  renderer.setBackground(0.07, 0.08, 0.11);
 
-  // per-structure colored surfaces from labelmap
+  const b = imageData.getBounds();
+  const c: [number, number, number] = [(b[0] + b[1]) / 2, (b[2] + b[3]) / 2, (b[4] + b[5]) / 2];
+
+  // HU-based iso-surfaces (skin, lung, soft tissue, bone)
+  for (const s of HU_SURFACES) {
+    const mc = vtkImageMarchingCubes.newInstance({ contourValue: s.hu, computeNormals: true, mergePoints: true });
+    mc.setInputData(imageData);
+    const m = vtkMapper.newInstance();
+    m.setInputConnection(mc.getOutputPort());
+    const a = vtkActor.newInstance();
+    a.setMapper(m);
+    a.getProperty().setColor(s.color[0], s.color[1], s.color[2]);
+    a.getProperty().setOpacity(s.opacity);
+    renderer.addActor(a);
+  }
+
+  // labelmap detail surfaces when available
   if (labelData) {
     for (const s of SURFACE_LABELS) {
       const smc = vtkImageMarchingCubes.newInstance({ contourValue: s.id - 0.5, computeNormals: true, mergePoints: true });
@@ -235,32 +236,73 @@ export function createVolumeView(
       renderer.addActor(sact);
     }
   }
+
+  // slice position indicator planes (colored, semi-transparent)
+  const slicePlanes = {} as Record<ViewName, ReturnType<typeof vtkActor.newInstance>>;
+  const planeColors: Record<ViewName, [number, number, number]> = {
+    axial: [0.2, 0.9, 0.5], coronal: [0.95, 0.8, 0.2], sagittal: [0.5, 0.7, 1.0],
+  };
+  const mkPlane = (view: ViewName) => {
+    const ps = vtkPlaneSource.newInstance();
+    const pm = vtkMapper.newInstance();
+    pm.setInputConnection(ps.getOutputPort());
+    const pa = vtkActor.newInstance();
+    pa.setMapper(pm);
+    pa.getProperty().setColor(...planeColors[view]);
+    pa.getProperty().setOpacity(0.22);
+    pa.getProperty().setRepresentationToWireframe();
+    renderer.addActor(pa);
+    slicePlanes[view] = pa;
+    return ps;
+  };
+  // store plane sources on the actors for later update
+  (slicePlanes as unknown as { _src: Record<ViewName, ReturnType<typeof vtkPlaneSource.newInstance>> })._src = {
+    axial: mkPlane('axial'), coronal: mkPlane('coronal'), sagittal: mkPlane('sagittal'),
+  };
+
   renderer.resetCamera();
-  // keep camera framed on the anatomy, not the beam geometry
-  const b = imageData.getBounds();
-  const c: [number, number, number] = [(b[0] + b[1]) / 2, (b[2] + b[3]) / 2, (b[4] + b[5]) / 2];
   const cam = renderer.getActiveCamera();
   cam.setFocalPoint(c[0], c[1], c[2]);
-  cam.setPosition(c[0] + 300, c[1] - 420, c[2] + 220);
+  cam.setPosition(c[0] + 320, c[1] - 420, c[2] + 200);
   cam.setViewUp(0, 0, 1);
   renderer.resetCameraClippingRange();
 
   grw.getInteractor().setInteractorStyle(vtkInteractorStyleTrackballCamera.newInstance());
-  return { container, grw, beamActors: [], renderer };
+  return { container, grw, beamActors: [], slicePlanes, renderer };
 }
 
-// Build / refresh beam visualization actors inside the 3D view.
+// Update the 3 slice-position indicator planes in 3D view.
+export function updateSlicePlanes(vv: VolumeView, world: [number, number, number], bounds: number[]) {
+  const [xmin, xmax, ymin, ymax, zmin, zmax] = bounds;
+  const srcs = (vv.slicePlanes as unknown as { _src: Record<ViewName, ReturnType<typeof vtkPlaneSource.newInstance>> })._src;
+  const [x, y, z] = world;
+  // axial: constant z, spans x-y
+  srcs.axial.setOrigin(xmin, ymin, z);
+  srcs.axial.setPoint1(xmax, ymin, z);
+  srcs.axial.setPoint2(xmin, ymax, z);
+  srcs.axial.modified();
+  // coronal: constant y, spans x-z
+  srcs.coronal.setOrigin(xmin, y, zmin);
+  srcs.coronal.setPoint1(xmax, y, zmin);
+  srcs.coronal.setPoint2(xmin, y, zmax);
+  srcs.coronal.modified();
+  // sagittal: constant x, spans y-z
+  srcs.sagittal.setOrigin(x, ymin, zmin);
+  srcs.sagittal.setPoint1(x, ymax, zmin);
+  srcs.sagittal.setPoint2(x, ymin, zmax);
+  srcs.sagittal.modified();
+  vv.grw.getRenderWindow().render();
+}
+
 export function updateBeam(vv: VolumeView, beam: BeamGeometry, center: [number, number, number]) {
   const { renderer, beamActors } = vv;
   for (const a of beamActors) renderer.removeActor(a);
   beamActors.length = 0;
 
-  // world center offset (beam coords are centered on volume center)
   const off = (p: [number, number, number]): [number, number, number] => [
     p[0] + center[0], p[1] + center[1], p[2] + center[2],
   ];
 
-  // source sphere
   const srcPos = off(beam.src);
   const sph = vtkSphereSource.newInstance({ radius: 6, thetaResolution: 16, phiResolution: 16 });
   sph.setCenter(srcPos);
@@ -272,7 +314,6 @@ export function updateBeam(vv: VolumeView, beam: BeamGeometry, center: [number, 
   renderer.addActor(sphAct);
   beamActors.push(sphAct);
 
-  // detector plane
   const detC = off(beam.detC);
   const h = beam.detHalf;
   const u = beam.u, v = beam.v;
@@ -295,7 +336,6 @@ export function updateBeam(vv: VolumeView, beam: BeamGeometry, center: [number, 
   renderer.addActor(plAct);
   beamActors.push(plAct);
 
-  // cone edges: source -> 4 detector corners
   const append = vtkAppendPolyData.newInstance();
   const corners: [number, number][] = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
   for (const [su, sv] of corners) {

@@ -1,0 +1,43 @@
+{
+  "caseId": "example_ct",
+  "source": "TotalSegmentator tests/reference_files (dataset CC BY 4.0)",
+  "dims": [
+    122,
+    101,
+    112
+  ],
+  "spacing": [
+    3.0,
+    3.0,
+    3.0
+  ],
+  "origin": [
+    -177.95632934570312,
+    11.319000244140625,
+    94.3017578125
+  ],
+  "direction": [
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "huRange": [
+    -1207,
+    3382
+  ],
+  "dtype": "int16",
+  "file": "volume_i16.bin",
+  "voxelOrder": "x-fastest (i,j,k) -> linear i + j*nx + k*nx*ny"
+}
