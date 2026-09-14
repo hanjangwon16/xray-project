@@ -62,8 +62,8 @@ export interface SliceView {
 }
 
 const VIEW_NORMALS: Record<ViewName, [number, number, number]> = {
-  axial: [0, 0, 1],
-  coronal: [0, -1, 0],
+  axial: [0, 0, -1],
+  coronal: [0, 1, 0],
   sagittal: [1, 0, 0],
 };
 
@@ -100,7 +100,7 @@ export function createSliceView(
   const c: [number, number, number] = [(b[0] + b[1]) / 2, (b[2] + b[3]) / 2, (b[4] + b[5]) / 2];
   camera.setFocalPoint(c[0], c[1], c[2]);
   camera.setPosition(c[0] + n[0] * 500, c[1] + n[1] * 500, c[2] + n[2] * 500);
-  if (view === 'axial') camera.setViewUp(0, -1, 0);
+  if (view === 'axial') camera.setViewUp(0, 1, 0);
   else camera.setViewUp(0, 0, 1);
   renderer.resetCamera();
 
@@ -141,8 +141,8 @@ export function updateCrosshair(sv: SliceView, world: [number, number, number], 
   let lines: [number[], number[]][] = [];
   if (sv.view === 'axial') {
     lines = [
-      [[xmin, y, z + e], [xmax, y, z + e]],
-      [[x, ymin, z + e], [x, ymax, z + e]],
+      [[xmin, y, z - e], [xmax, y, z - e]],
+      [[x, ymin, z - e], [x, ymax, z - e]],
     ];
   } else if (sv.view === 'coronal') {
     lines = [
@@ -160,6 +160,7 @@ export function updateCrosshair(sv: SliceView, world: [number, number, number], 
     sv.crosshair[i].setPoint2(lines[i][1][0], lines[i][1][1], lines[i][1][2]);
     sv.crosshair[i].modified();
   }
+  sv.grw.getRenderWindow().render();
 }
 
 export function setSliceWindow(sv: SliceView, w: number, l: number) {
@@ -179,17 +180,16 @@ export interface VolumeView {
 }
 
 // HU-based iso-surfaces: skin, lung, bone. Labelmap adds detail when present.
-const HU_SURFACES: { hu: number; name: string; color: [number, number, number]; opacity: number }[] = [
-  { hu: -400, name: '피부', color: [0.88, 0.72, 0.6], opacity: 0.10 },
-  { hu: -500, name: '폐', color: [0.5, 0.7, 0.95], opacity: 0.30 },
-  { hu: 300, name: '뼈', color: [0.87, 0.83, 0.76], opacity: 0.85 },
-  { hu: 60, name: '연조직', color: [0.8, 0.45, 0.4], opacity: 0.18 },
+const HU_SURFACES = [
+ { hu: -300, color: [0.65,0.74,0.8], opacity: 0.08 },
+ { hu: 300, color: [0.9,0.85,0.72], opacity: 0.85 },
 ];
-
-const SURFACE_LABELS: { id: number; name: string; color: [number, number, number]; opacity: number }[] = [
-  { id: 52, name: '심장', color: [0.9, 0.25, 0.3], opacity: 0.9 },
-  { id: 7, name: '대동맥', color: [0.95, 0.3, 0.3], opacity: 0.85 },
-  { id: 5, name: '간', color: [0.8, 0.5, 0.25], opacity: 0.75 },
+const SURFACE_LABELS = [
+ {id:1,color:[0.65,0.45,0.85],opacity:0.85},
+ {id:2,color:[1,0.64,0.35],opacity:0.95},
+ {id:3,color:[1,0.78,0.4],opacity:0.95},
+ {id:5,color:[0.8,0.38,0.35],opacity:0.65},
+ {id:6,color:[0.9,0.75,0.4],opacity:0.7},
 ];
 
 export function createVolumeView(
@@ -225,8 +225,13 @@ export function createVolumeView(
   // labelmap detail surfaces when available
   if (labelData) {
     for (const s of SURFACE_LABELS) {
-      const smc = vtkImageMarchingCubes.newInstance({ contourValue: s.id - 0.5, computeNormals: true, mergePoints: true });
-      smc.setInputData(labelData);
+      const mask = vtkImageData.newInstance();
+      mask.setDimensions(imageData.getDimensions());
+      mask.setOrigin(imageData.getOrigin());
+      mask.setSpacing(imageData.getSpacing());
+      mask.getPointData().setScalars(vtkDataArray.newInstance({values: Uint8Array.from(labelData.getPointData().getScalars().getData(), x => Number(x) === s.id ? 1 : 0), numberOfComponents: 1}));
+      const smc = vtkImageMarchingCubes.newInstance({ contourValue: 0.5, computeNormals: true, mergePoints: true });
+      smc.setInputData(mask);
       const smap = vtkMapper.newInstance();
       smap.setInputConnection(smc.getOutputPort());
       const sact = vtkActor.newInstance();
@@ -243,13 +248,14 @@ export function createVolumeView(
     axial: [0.2, 0.9, 0.5], coronal: [0.95, 0.8, 0.2], sagittal: [0.5, 0.7, 1.0],
   };
   const mkPlane = (view: ViewName) => {
-    const ps = vtkPlaneSource.newInstance();
+    const ps = vtkPlaneSource.newInstance({xResolution:1,yResolution:1});
     const pm = vtkMapper.newInstance();
     pm.setInputConnection(ps.getOutputPort());
     const pa = vtkActor.newInstance();
     pa.setMapper(pm);
     pa.getProperty().setColor(...planeColors[view]);
-    pa.getProperty().setOpacity(0.22);
+    pa.getProperty().setOpacity(0.55);
+    pa.getProperty().setLighting(false);
     pa.getProperty().setRepresentationToWireframe();
     renderer.addActor(pa);
     slicePlanes[view] = pa;
@@ -263,8 +269,9 @@ export function createVolumeView(
   renderer.resetCamera();
   const cam = renderer.getActiveCamera();
   cam.setFocalPoint(c[0], c[1], c[2]);
-  cam.setPosition(c[0] + 320, c[1] - 420, c[2] + 200);
+  cam.setPosition(c[0] + 100, c[1] + 700, c[2] + 160);
   cam.setViewUp(0, 0, 1);
+  renderer.resetCamera();
   renderer.resetCameraClippingRange();
 
   grw.getInteractor().setInteractorStyle(vtkInteractorStyleTrackballCamera.newInstance());
@@ -322,7 +329,7 @@ export function updateBeam(vv: VolumeView, beam: BeamGeometry, center: [number, 
     detC[1] + u[1] * h * su + v[1] * h * sv,
     detC[2] + u[2] * h * su + v[2] * h * sv,
   ];
-  const pl = vtkPlaneSource.newInstance();
+  const pl = vtkPlaneSource.newInstance({xResolution:1,yResolution:1});
   pl.setOrigin(corner(-1, -1));
   pl.setPoint1(corner(1, -1));
   pl.setPoint2(corner(-1, 1));

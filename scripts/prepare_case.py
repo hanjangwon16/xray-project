@@ -21,7 +21,7 @@ def main(src: str, outdir: str) -> None:
 
     out = Path(outdir)
     out.mkdir(parents=True, exist_ok=True)
-    d.astype("<i2").tofile(out / "volume_i16.bin")
+    d.astype("<i2").ravel(order="F").tofile(out / "volume_i16.bin")
     meta = {
         "caseId": out.name,
         "source": "TotalSegmentator tests/reference_files (dataset CC BY 4.0)",

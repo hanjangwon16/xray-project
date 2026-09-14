@@ -4,3 +4,6 @@ dist/
 __pycache__/
 *.tsbuildinfo
 _shot*.mjs
+
+data/bodyparts3d/
+data/verification/

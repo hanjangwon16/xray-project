@@ -8,7 +8,7 @@ def main(seg_path, outdir):
     img = nib.as_closest_canonical(nib.load(seg_path))
     d = np.asarray(img.dataobj).astype(np.uint8)
     out = Path(outdir)
-    d.tofile(out / "labels_u8.bin")
+    d.ravel(order="F").tofile(out / "labels_u8.bin")
     print("labels dims", d.shape, "unique", np.unique(d).tolist())
 
 if __name__ == "__main__":

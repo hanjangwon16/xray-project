@@ -123,7 +123,7 @@ function render(req: DrrRequest): DrrResponse {
         const lid = labAt(i0, j0, k0);
         if (lid !== 0) labMu.set(lid, (labMu.get(lid) ?? 0) + mu);
       }
-      pixels[r * N + c] = Math.exp(-sum);
+      pixels[r * N + c] = sum; // log attenuation: avoids saturated white projection
       if (labelPix) {
         let best = 0, bestW = 0;
         for (const [lid, w] of labMu) if (w > bestW) { bestW = w; best = lid; }
@@ -140,7 +140,7 @@ function render(req: DrrRequest): DrrResponse {
   const gamma = 0.55;
   for (let i = 0; i < out.length; i++) {
     const t = (pixels[i] - mn) / rng;
-    out[i] = 255 - Math.pow(t, gamma) * 255;
+    out[i] = Math.pow(t, gamma) * 255;
   }
   const ms = performance.now() - t0;
   return { type: 'drr', caseId: req.caseId, width: N, height: N, pixels: out.buffer as ArrayBuffer, labelPix: labelPix ? labelPix.buffer as ArrayBuffer : null, ms };

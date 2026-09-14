@@ -5,7 +5,7 @@ import { computeBeam } from './beam';
 import { labelColor } from './labels';
 import type { DrrRequest, DrrResponse, ViewName } from './types';
 
-const CASES = [{ id: 'example_ct', name: '전체 흉·복부 CT' }, { id: 'example_ct_sm', name: '상복부 CT (라벨)' }];
+const CASES = [{ id: 'example_ct', name: '복부 CT · 넓은 범위' }, { id: 'example_ct_sm', name: '상복부 · 장기 연동' }];
 
 interface Preset { name: string; yaw: number; pitch: number; roll: number; desc: string }
 const PRESETS: Preset[] = [
@@ -18,6 +18,9 @@ const PRESETS: Preset[] = [
 ];
 
 export default function App() {
+  const [activePlane,setActivePlane] = useState<ViewName>('axial');
+  const [mode,setMode] = useState<'ct'|'xray'>('ct');
+  const [selectedOrgan,setSelectedOrgan] = useState('');
   const [vol, setVol] = useState<Volume | null>(null);
   const [slices, setSlices] = useState<Record<ViewName, number>>({ axial: 15, coronal: 50, sagittal: 61 });
   const [yaw, setYaw] = useState(0);
@@ -27,11 +30,12 @@ export default function App() {
   const [preset, setPreset] = useState<string>('PA');
   const [drrUrl, setDrrUrl] = useState<string | null>(null);
   const [drrMs, setDrrMs] = useState<number | null>(null);
-  const [showBeam, setShowBeam] = useState(true);
-  const [tint, setTint] = useState(true);
+  const [showBeam, setShowBeam] = useState(false);
+  const [tint, setTint] = useState(false);
+  const tintRef = useRef(tint); tintRef.current = tint;
   const [xrayTab, setXrayTab] = useState<'drr' | 'pos'>('drr');
-  const [winPreset, setWinPreset] = useState<string>('기본');
-  const [caseId, setCaseId] = useState('example_ct');
+  const [winPreset, setWinPreset] = useState<string>('연조직');
+  const [caseId, setCaseId] = useState('example_ct_sm');
 
   const WINDOWS: Record<string, [number, number]> = {
     '기본': [2307, 53], '뼈': [2000, 400], '폐': [1600, -600], '연조직': [400, 40],
@@ -53,6 +57,7 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    setVol(null); setDrrUrl(null);
     // clear previous views
     for (const el of [axialRef.current, coronalRef.current, sagittalRef.current, volRef.current]) {
       if (el) el.innerHTML = '';
@@ -62,6 +67,7 @@ export default function App() {
     loadCase(caseId).then((v) => {
       if (cancelled) return;
       setVol(v);
+      setSlices({axial: Math.floor(v.meta.dims[2]/2),coronal:Math.floor(v.meta.dims[1]/2),sagittal:Math.floor(v.meta.dims[0]/2)});
       const imageData = buildImageData(v);
       const labelData = buildLabelData(v);
       viewsRef.current = {
@@ -82,7 +88,7 @@ export default function App() {
         for (let i = 0; i < px.length; i++) {
           const g = px[i];
           let r = g, gg = g, b = g;
-          if (tint && lp && lp[i] !== 0) {
+          if (tintRef.current && lp && lp[i] !== 0) {
             const c = labelColor(lp[i]);
             r = g * 0.55 + c[0] * 0.45;
             gg = g * 0.55 + c[1] * 0.45;
@@ -96,7 +102,10 @@ export default function App() {
       };
       workerRef.current = w;
     });
-    return () => { cancelled = true; workerRef.current?.terminate(); };
+    return () => { cancelled = true; workerRef.current?.terminate();
+      if (viewsRef.current) Object.values(viewsRef.current).forEach(v => v.grw.delete());
+      volViewRef.current?.grw.delete();
+    };
   }, [caseId]);
 
   // re-render tint when toggled (worker holds last result; just re-request)
@@ -145,7 +154,7 @@ export default function App() {
     setSliceWindow(viewsRef.current.axial, w, l);
     setSliceWindow(viewsRef.current.coronal, w, l);
     setSliceWindow(viewsRef.current.sagittal, w, l);
-  }, [winPreset]);
+  }, [winPreset, vol]);
 
   // beam overlay
   useEffect(() => {
@@ -161,6 +170,21 @@ export default function App() {
     updateBeam(volViewRef.current, beam, vol.center);
   }, [yaw, pitch, roll, sid, vol, showBeam]);
 
+  const selectOrgan = (id:number,name:string) => {
+    if (!vol?.labels) return;
+    const [nx,ny] = vol.meta.dims; let x=0,y=0,z=0,n=0;
+    vol.labels.forEach((v,i)=>{if(v===id){x+=i%nx;y+=Math.floor(i/nx)%ny;z+=Math.floor(i/(nx*ny));n++;}});
+    if(n){setSlices({sagittal:Math.round(x/n),coronal:Math.round(y/n),axial:Math.round(z/n)});setSelectedOrgan(name);setMode('ct');}
+  };
+  useEffect(()=>{
+    requestAnimationFrame(()=>{
+      if(viewsRef.current) Object.values(viewsRef.current).forEach(v=>{v.grw.resize();v.grw.getRenderWindow().render();});
+      if(volViewRef.current){
+        for(const v of ['axial','coronal','sagittal'] as ViewName[]) volViewRef.current.slicePlanes[v].setVisibility(mode==='ct' && v===activePlane);
+        volViewRef.current.grw.resize();volViewRef.current.grw.getRenderWindow().render();
+      }
+    });
+  },[activePlane,mode,vol]);
   const curPreset = PRESETS.find((p) => p.name === preset);
 
   return (
@@ -170,19 +194,26 @@ export default function App() {
         <span className="sub">CT 단면 · 3D 구조 · 가상 X-ray 연동 학습 시뮬레이터</span>
         <select className="winsel" value={caseId} onChange={(e) => setCaseId(e.target.value)}>{CASES.map((cs) => <option key={cs.id} value={cs.id}>{cs.name}</option>)}</select><span className="badge">교육용 · 비진단</span>
       </header>
-      <main className="layout">
+      <div className="guide">① 복부 3D에서 장기 위치 확인 → ② CT 슬라이더로 절단 위치 이동 → ③ 같은 높이의 단면 비교 · X-ray는 여러 구조가 겹친 투영 영상입니다.</div>
+      <nav className="workspace-nav">
+        <button className={mode==='ct'?'active':''} onClick={()=>setMode('ct')}>CT 단면 학습</button>
+        <button className={mode==='xray'?'active':''} onClick={()=>setMode('xray')}>X-ray 촬영 방향</button>
+        {(['axial','coronal','sagittal'] as ViewName[]).map((v,i)=><button className={activePlane===v?'active':''} key={v} onClick={()=>{setActivePlane(v);setMode('ct');}}>{['가로','앞뒤','좌우'][i]} 단면</button>)}
+        <span>부위: {selectedOrgan || '상복부'} · {vol?.meta.dims[2]}개 CT 단면</span>
+      </nav>
+      <main className={'layout mode-'+mode+' plane-'+activePlane}>
         {/* left: 3 CT slices */}
         <div className="col slices">
-          <div className="cell">
-            <div className="cellhead"><span>Axial</span><select className="winsel" value={winPreset} onChange={(e) => setWinPreset(e.target.value)}>{Object.keys(WINDOWS).map((k) => <option key={k} value={k}>{k}</option>)}</select><input type="range" min={0} max={(vol?.meta.dims[2] ?? 1) - 1} value={slices.axial} onChange={(e) => setSlices((s) => ({ ...s, axial: +e.target.value }))} /></div>
+          <div className="cell axial"><div className="orientation">위: 앞(A) · 아래: 뒤(P) · 화면 왼쪽: 환자 오른쪽(R)</div>
+            <div className="cellhead"><span>CT · 가로 단면</span><select className="winsel" value={winPreset} onChange={(e) => setWinPreset(e.target.value)}>{Object.keys(WINDOWS).map((k) => <option key={k} value={k}>{k}</option>)}</select><input type="range" min={0} max={(vol?.meta.dims[2] ?? 1) - 1} value={slices.axial} onChange={(e) => setSlices((s) => ({ ...s, axial: +e.target.value }))} /></div>
             <div ref={axialRef} className="vpwrap" />
           </div>
-          <div className="cell">
-            <div className="cellhead"><span>Coronal</span><input type="range" min={0} max={(vol?.meta.dims[1] ?? 1) - 1} value={slices.coronal} onChange={(e) => setSlices((s) => ({ ...s, coronal: +e.target.value }))} /></div>
+          <div className="cell coronal">
+            <div className="cellhead"><span>CT · 앞뒤 단면</span><input type="range" min={0} max={(vol?.meta.dims[1] ?? 1) - 1} value={slices.coronal} onChange={(e) => setSlices((s) => ({ ...s, coronal: +e.target.value }))} /></div>
             <div ref={coronalRef} className="vpwrap" />
           </div>
-          <div className="cell">
-            <div className="cellhead"><span>Sagittal</span><input type="range" min={0} max={(vol?.meta.dims[0] ?? 1) - 1} value={slices.sagittal} onChange={(e) => setSlices((s) => ({ ...s, sagittal: +e.target.value }))} /></div>
+          <div className="cell sagittal">
+            <div className="cellhead"><span>CT · 좌우 단면</span><input type="range" min={0} max={(vol?.meta.dims[0] ?? 1) - 1} value={slices.sagittal} onChange={(e) => setSlices((s) => ({ ...s, sagittal: +e.target.value }))} /></div>
             <div ref={sagittalRef} className="vpwrap" />
           </div>
         </div>
@@ -191,14 +222,18 @@ export default function App() {
         <div className="col center">
           <div className="cell fill">
             <div className="cellhead">
-              <span>3D + X-ray 빔</span>
+              <span>실제 CT로 재구성한 복부 3D</span>
               <label className="inline"><input type="checkbox" checked={showBeam} onChange={(e) => setShowBeam(e.target.checked)} /> 빔</label>
             </div>
+            <div className="organ-select">
+            {vol?.labels && [[5,'간'],[1,'비장'],[2,'우신장'],[3,'좌신장'],[6,'위']].map(([id,name])=><button key={id} className={selectedOrgan===name?'active':''} onClick={()=>selectOrgan(Number(id),String(name))}>{name}</button>)}
+            <span>장기를 선택하면 해당 위치의 CT 단면으로 이동합니다.</span>
+            </div>
             <div ref={volRef} className="vpwrap" />
-            <div className="legend">
-              <span><i style={{ background: '#e6404d' }} />심장</span>
-              <span><i style={{ background: '#8cb3f2' }} />폐</span>
-              <span><i style={{ background: '#f24d4d' }} />대동맥</span>
+            <div className="legend" style={{visibility: vol?.labels ? "visible" : "hidden"}}>
+              <span><i style={{ background: '#ffa359' }} />신장</span>
+              <span><i style={{ background: '#a673d9' }} />비장</span>
+              <span><i style={{ background: '#e6bf66' }} />위</span>
               <span><i style={{ background: '#cc8040' }} />간</span>
               <span><i style={{ background: '#ddd6c0' }} />뼈</span>
             </div>
@@ -210,10 +245,10 @@ export default function App() {
           <div className="cell fill">
             <div className="cellhead">
               <div className="tabs">
-                <button className={xrayTab === 'drr' ? 'active' : ''} onClick={() => setXrayTab('drr')}>X-ray</button>
+                <button className={xrayTab === 'drr' ? 'active' : ''} onClick={() => setXrayTab('drr')}>가상 X-ray</button>
                 <button className={xrayTab === 'pos' ? 'active' : ''} onClick={() => setXrayTab('pos')}>포지셔닝</button>
               </div>
-              <label className="inline"><input type="checkbox" checked={tint} onChange={(e) => setTint(e.target.checked)} /> 구조색</label>
+              <label className="inline"><input type="checkbox" disabled={!vol?.labels} checked={tint} onChange={(e) => setTint(e.target.checked)} /> 구조색</label>
             </div>
             <div className="xraywrap">
               {xrayTab === 'drr' ? (
@@ -234,7 +269,7 @@ export default function App() {
             <label>환자 회전 <span className="val">{yaw}°</span><input type="range" min={-180} max={180} value={yaw} onChange={(e) => { setYaw(+e.target.value); setPreset(''); }} /></label>
             <label>C-arm 각도 <span className="val">{pitch}°</span><input type="range" min={-60} max={60} value={pitch} onChange={(e) => { setPitch(+e.target.value); setPreset(''); }} /></label>
             <label>검출기 회전 <span className="val">{roll}°</span><input type="range" min={-90} max={90} value={roll} onChange={(e) => { setRoll(+e.target.value); setPreset(''); }} /></label>
-            <label>SID <span className="val">{sid}mm</span><input type="range" min={600} max={1500} step={50} value={sid} onChange={(e) => setSid(+e.target.value)} /></label>
+            <label>소스–몸 중심 거리 <span className="val">{sid}mm</span><input type="range" min={600} max={1500} step={50} value={sid} onChange={(e) => setSid(+e.target.value)} /></label>
           </div>
         </div>
       </main>

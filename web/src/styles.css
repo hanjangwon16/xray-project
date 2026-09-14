@@ -62,3 +62,20 @@ footer .right { color: #4a5568; }
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 240px 1fr 280px; }
 }
+
+.guide {padding:8px 18px;color:#92aeb4;font-size:12px;background:#112029;}
+.workspace-nav,.organ-select {display:flex;gap:8px;align-items:center;padding:8px 14px;flex-wrap:wrap;}
+.workspace-nav span,.organ-select span {font-size:11px;color:#8ea3ae;}
+button {background:#172832;color:#c1d6dc;border:1px solid #2c4650;border-radius:6px;padding:7px 12px;cursor:pointer;}
+button.active {background:#245951;border-color:#71cabe;color:#fff;}
+.layout {grid-template-columns: minmax(0,1.15fr) minmax(0,1fr);}
+.center {grid-column:1;grid-row:1;}
+.slices {grid-column:2;grid-row:1;display:flex;}
+.slices .cell {display:none;flex:1;}
+.plane-axial .axial,.plane-coronal .coronal,.plane-sagittal .sagittal {display:flex;}
+.mode-ct .right {display:none;}
+.mode-xray .slices {display:none;}
+.mode-xray .right {grid-column:2;grid-row:1;}
+@media(max-width:800px){header .sub{display:none;}.layout{grid-template-columns:1fr 1fr;padding:6px;gap:6px;}.guide{font-size:10px;}.workspace-nav{gap:4px;padding:5px;}button{padding:5px 7px;}.cellhead{flex-wrap:wrap;}.organ-select span{display:none;}}
+
+.orientation{font-size:11px;color:#8ea3ae;padding:4px 0 8px;}
