@@ -105,3 +105,8 @@ J. 한계: 산란·스펙트럼·검출기 응답 미모델링 시 임상 동등
 - DRR 320px, 1.5mm sampling, ray-AABB 교차 범위, requestId에 따른 stale 결과 무시 구현.
 - 고정 감쇠 window, 팬텀/DiffDRR 동등 검증, 개별 구조 picking, 완전한 말초신경, 환자별 전신 CT 정합은 후속이다.
 - Playwright 로컬: 5계통 단독/전체 선택, 드래그/휠/reset, 사례 전환, 사위 DRR 변경 통과. pageerror 0, document overflow 없음.
+
+## 11. 전신 탐색에서 영상 비교 진입
+전신 메시 클릭은 CellPicker로 실제 삼각형을 고르고 catalog의 계통별 누적 triangle 범위로 이름을 찾는다. 여러 actor를 고르면 가장 앞 actor를 다시 단독 pick하여 cellId가 같은 actor 소속임을 보장한다. 5px 이하 이동만 클릭, 회전 드래그는 선택하지 않는다.
+간·양쪽 신장·비장·위 선택은 AnatomyPreview 옆 패널에서 동일 장기의 실제 복부 사례를 연다. CT 단면은 사례 labelmap 장기 중심으로 이동한다. X-ray는 사례 전체 복부 투영이며 선택 장기만의 결과가 아님을 표시한다. 아틀라스 표면 좌표를 다른 환자 CT voxel로 직접 변환하지 않는다. 미지원 구조는 데이터 없음. 전신 카메라는 패널 열고 닫아도 유지한다.
+검증: quick organ 선택, 122px CT/320px DRR 출력 전환, 두부 실제 클릭 -> Frontal bone 식별, pageerror 0, page overflow 없음.
