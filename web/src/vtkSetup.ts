@@ -56,6 +56,9 @@ export interface SliceView {
   grw: ReturnType<typeof vtkGenericRenderWindow.newInstance>;
   mapper: ReturnType<typeof vtkImageResliceMapper.newInstance>;
   plane: ReturnType<typeof vtkPlane.newInstance>;
+  actor: ReturnType<typeof vtkImageSlice.newInstance>;
+  crosshair: { setPoint1: (x:number,y:number,z:number)=>void; setPoint2: (x:number,y:number,z:number)=>void; modified: ()=>void }[];
+  view: ViewName;
 }
 
 const VIEW_NORMALS: Record<ViewName, [number, number, number]> = {
@@ -111,7 +114,60 @@ export function createSliceView(
   const istyle = vtkInteractorStyleImage.newInstance();
   grw.getInteractor().setInteractorStyle(istyle);
 
-  return { container, grw, mapper, plane };
+  // crosshair lines (in-plane)
+  const chColor: Record<ViewName, [number, number, number]> = {
+    axial: [0.2, 0.9, 0.5], coronal: [0.95, 0.8, 0.2], sagittal: [0.5, 0.7, 1.0],
+  };
+  const crosshair: SliceView['crosshair'] = [];
+  for (let li = 0; li < 2; li++) {
+    const ln = vtkLineSource.newInstance();
+    const lm = vtkMapper.newInstance();
+    lm.setInputConnection(ln.getOutputPort());
+    const la = vtkActor.newInstance();
+    la.setMapper(lm);
+    la.getProperty().setColor(...chColor[view]);
+    la.getProperty().setOpacity(0.75);
+    la.getProperty().setLineWidth(1.5);
+    renderer.addActor(la);
+    crosshair.push(ln as unknown as SliceView['crosshair'][0]);
+  }
+
+  return { container, grw, mapper, plane, actor, crosshair, view };
+}
+
+// Update crosshair lines on a slice view to intersect at world point.
+export function updateCrosshair(sv: SliceView, world: [number, number, number], bounds: number[]) {
+  const [xmin, xmax, ymin, ymax, zmin, zmax] = bounds;
+  const [x, y, z] = world;
+  const e = 0.5;
+  let lines: [number[], number[]][] = [];
+  if (sv.view === 'axial') {
+    lines = [
+      [[xmin, y, z + e], [xmax, y, z + e]],
+      [[x, ymin, z + e], [x, ymax, z + e]],
+    ];
+  } else if (sv.view === 'coronal') {
+    lines = [
+      [[xmin, y + e, z], [xmax, y + e, z]],
+      [[x, y + e, zmin], [x, y + e, zmax]],
+    ];
+  } else {
+    lines = [
+      [[x + e, ymin, z], [x + e, ymax, z]],
+      [[x + e, y, zmin], [x + e, y, zmax]],
+    ];
+  }
+  for (let i = 0; i < 2; i++) {
+    sv.crosshair[i].setPoint1(lines[i][0][0], lines[i][0][1], lines[i][0][2]);
+    sv.crosshair[i].setPoint2(lines[i][1][0], lines[i][1][1], lines[i][1][2]);
+    sv.crosshair[i].modified();
+  }
+}
+
+export function setSliceWindow(sv: SliceView, w: number, l: number) {
+  sv.actor.getProperty().setColorWindow(w);
+  sv.actor.getProperty().setColorLevel(l);
+  sv.grw.getRenderWindow().render();
 }
 
 export function setSlicePosition(sv: SliceView, world: [number, number, number]) {

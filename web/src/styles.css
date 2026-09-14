@@ -1,35 +1,64 @@
 * { box-sizing: border-box; }
+html, body, #root { height: 100%; }
 body { margin: 0; font-family: -apple-system, 'Pretendard', 'Noto Sans KR', sans-serif;
-  background: #0f1115; color: #e8e9ec; }
-.app { max-width: 1400px; margin: 0 auto; padding: 16px; }
-header h1 { margin: 0; font-size: 22px; }
-header p { margin: 4px 0 16px; color: #9aa0ab; font-size: 13px; }
-.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.panel { background: #171a21; border: 1px solid #262b36; border-radius: 10px; padding: 10px; }
-.panel h2 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #c7ccd6; display: flex; justify-content: space-between; align-items: center; }
-.panel h2 .inline { font-size: 12px; font-weight: 400; color: #8a919d; display: flex; align-items: center; gap: 4px; }
-.vpwrap { position: relative; width: 100%; aspect-ratio: 1; }
+  background: #0a0c10; color: #e8e9ec; overflow: hidden; -webkit-font-smoothing: antialiased; }
+.app { height: 100vh; display: flex; flex-direction: column; padding: 0; }
+
+header { display: flex; align-items: center; gap: 14px; flex: 0 0 auto;
+  padding: 10px 18px; background: linear-gradient(180deg,#141720,#0f1117); border-bottom: 1px solid #22262f; }
+header h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+header h1 .accent { color: #4a9eff; }
+header .sub { color: #8a919d; font-size: 12px; }
+header .badge { margin-left: auto; font-size: 10px; color: #6d7480; border: 1px solid #2a2f3a; border-radius: 20px; padding: 3px 10px; }
+
+.layout { flex: 1 1 auto; display: grid; grid-template-columns: 300px 1fr 350px; gap: 10px; min-height: 0; padding: 10px 14px; }
+.col { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.slices { display: grid; grid-template-rows: repeat(3, 1fr); }
+
+.cell { background: #14171d; border: 1px solid #232833; border-radius: 10px; padding: 8px;
+  display: flex; flex-direction: column; min-height: 0; box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset, 0 2px 8px rgba(0,0,0,0.25); }
+.cell.fill { flex: 1 1 auto; }
+.cellhead { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  font-size: 12px; color: #c7ccd6; font-weight: 600; margin-bottom: 6px; flex: 0 0 auto; }
+.cellhead input[type=range] { flex: 1; margin: 0; }
+.cellhead .inline { font-size: 11px; font-weight: 400; color: #8a919d; display: flex; align-items: center; gap: 3px; }
+
+.vpwrap { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 6px; overflow: hidden; background: #000; }
 .vp { position: absolute; inset: 0; }
 .vp canvas { width: 100% !important; height: 100% !important; }
-input[type=range] { width: 100%; margin-top: 8px; accent-color: #4a9eff; }
-.drr { margin-top: 12px; }
-.drrimg { width: 360px; image-rendering: auto; display: block; border-radius: 6px; border: 1px solid #333a48; }
-.controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; margin: 10px 0; }
-.controls label { font-size: 13px; color: #aeb4bf; }
-.presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-.presets button { background: #22262f; color: #c7ccd6; border: 1px solid #333a48; border-radius: 6px;
-  padding: 5px 12px; font-size: 12px; cursor: pointer; }
-.presets button:hover { background: #2c3140; }
+
+.xraywrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 6px; overflow: hidden; }
+.drrimg { max-width: 100%; max-height: 100%; object-fit: contain; }
+.poscanvas { width: 100%; height: 100%; display: block; }
+
+.tabs { display: flex; gap: 4px; }
+.tabs button { background: #20242e; color: #aeb4bf; border: 1px solid #2c3140; border-radius: 6px;
+  padding: 4px 12px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.tabs button.active { background: #2b4a75; border-color: #4a9eff; color: #fff; }
+
+.controls { flex: 0 0 auto; }
+.controls label { font-size: 11px; color: #9aa0ab; display: block; margin-top: 6px; }
+.controls label .val { color: #4a9eff; font-weight: 600; float: right; }
+.controls input[type=range] { width: 100%; margin-top: 3px; accent-color: #4a9eff; height: 4px; }
+.presets { display: flex; gap: 5px; flex-wrap: wrap; }
+.presets button { background: #20242e; color: #c7ccd6; border: 1px solid #2c3140; border-radius: 6px;
+  padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.presets button:hover { background: #2a2f3c; }
 .presets button.active { background: #2b4a75; border-color: #4a9eff; color: #fff; }
-.hint { font-size: 11px; color: #6d7480; margin: 6px 0 0; }
-.legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
-.legend span { font-size: 11px; color: #aeb4bf; display: flex; align-items: center; gap: 4px; }
-.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-.meta { color: #8a919d; font-size: 12px; }
-.tint { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #aeb4bf; margin-bottom: 8px; }
-footer { margin-top: 20px; border-top: 1px solid #262b36; padding-top: 14px; }
-.foot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.foot-col { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; color: #7c828d; line-height: 1.5; }
-.foot-col strong { color: #c7ccd6; font-size: 13px; margin-bottom: 2px; }
-.foot-col .warn { color: #d8a24a; }
-@media (max-width: 900px) { .foot-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.winsel { background: #20242e; color: #c7ccd6; border: 1px solid #2c3140; border-radius: 5px;
+  font-size: 11px; padding: 2px 6px; }
+
+.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; flex: 0 0 auto; }
+.legend span { font-size: 10px; color: #aeb4bf; display: flex; align-items: center; gap: 4px; }
+.legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.hint { font-size: 10px; color: #6d7480; margin: 3px 0 0; }
+.meta { color: #8a919d; font-size: 10px; margin: 3px 0 0; }
+
+footer { flex: 0 0 auto; padding: 7px 18px; background: #0d0f14; border-top: 1px solid #22262f;
+  font-size: 10px; color: #6d7480; display: flex; justify-content: space-between; align-items: center; }
+footer .right { color: #4a5568; }
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 240px 1fr 280px; }
+}

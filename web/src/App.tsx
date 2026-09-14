@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { loadCase, type Volume } from './volume';
-import { buildImageData, buildLabelData, createSliceView, createVolumeView, setSlicePosition, updateBeam, type SliceView, type VolumeView } from './vtkSetup';
+import { buildImageData, buildLabelData, createSliceView, createVolumeView, setSlicePosition, updateBeam, updateCrosshair, setSliceWindow, type SliceView, type VolumeView } from './vtkSetup';
 import { computeBeam } from './beam';
 import { labelColor } from './labels';
 import type { DrrRequest, DrrResponse, ViewName } from './types';
@@ -9,10 +9,10 @@ const CASE_ID = 'example_ct_sm';
 
 interface Preset { name: string; yaw: number; pitch: number; roll: number; desc: string }
 const PRESETS: Preset[] = [
-  { name: 'PA 정면', yaw: 0, pitch: 0, roll: 0, desc: '후-전 방향, 표준 흉부 정면' },
-  { name: 'AP 정면', yaw: 180, pitch: 0, roll: 0, desc: '전-후 방향, 심장 확대됨' },
-  { name: '좌측면', yaw: -90, pitch: 0, roll: 0, desc: '좌측 측면 촬영' },
-  { name: '우측면', yaw: 90, pitch: 0, roll: 0, desc: '우측 측면 촬영' },
+  { name: 'PA', yaw: 0, pitch: 0, roll: 0, desc: '후-전 정면' },
+  { name: 'AP', yaw: 180, pitch: 0, roll: 0, desc: '전-후 정면' },
+  { name: '좌측면', yaw: -90, pitch: 0, roll: 0, desc: '좌측 측면' },
+  { name: '우측면', yaw: 90, pitch: 0, roll: 0, desc: '우측 측면' },
   { name: 'LAO 45°', yaw: -45, pitch: 0, roll: 0, desc: '좌전방 사위' },
   { name: 'RAO 45°', yaw: 45, pitch: 0, roll: 0, desc: '우전방 사위' },
 ];
@@ -24,11 +24,17 @@ export default function App() {
   const [pitch, setPitch] = useState(0);
   const [roll, setRoll] = useState(0);
   const [sid, setSid] = useState(1000);
-  const [preset, setPreset] = useState<string>('PA 정면');
+  const [preset, setPreset] = useState<string>('PA');
   const [drrUrl, setDrrUrl] = useState<string | null>(null);
   const [drrMs, setDrrMs] = useState<number | null>(null);
   const [showBeam, setShowBeam] = useState(true);
   const [tint, setTint] = useState(true);
+  const [xrayTab, setXrayTab] = useState<'drr' | 'pos'>('drr');
+  const [winPreset, setWinPreset] = useState<string>('기본');
+
+  const WINDOWS: Record<string, [number, number]> = {
+    '기본': [2307, 53], '뼈': [2000, 400], '폐': [1600, -600], '연조직': [400, 40],
+  };
 
   const axialRef = useRef<HTMLDivElement>(null);
   const coronalRef = useRef<HTMLDivElement>(null);
@@ -86,6 +92,26 @@ export default function App() {
     return () => { cancelled = true; workerRef.current?.terminate(); };
   }, []);
 
+  // re-render tint when toggled (worker holds last result; just re-request)
+  useEffect(() => {
+    if (!vol) return;
+    const copy = vol.data.slice().buffer;
+    const lcopy = vol.labels ? vol.labels.slice().buffer : null;
+    const sdd = sid * 1.15;
+    const req: DrrRequest = {
+      type: 'render', caseId: CASE_ID, buffer: copy, labelBuffer: lcopy,
+      dims: vol.meta.dims, spacing: vol.meta.spacing,
+      yawDeg: yaw, pitchDeg: pitch, rollDeg: roll, sid, sdd, outSize: 200, stepMm: 2.5,
+    };
+    window.clearTimeout(drrTimer.current);
+    drrTimer.current = window.setTimeout(() => {
+      const transfers: Transferable[] = [copy];
+      if (lcopy) transfers.push(lcopy);
+      workerRef.current?.postMessage(req, transfers);
+    }, 60);
+    return () => window.clearTimeout(drrTimer.current);
+  }, [yaw, pitch, roll, sid, vol, tint]);
+
   // slice sync
   useEffect(() => {
     if (!vol || !viewsRef.current) return;
@@ -99,27 +125,19 @@ export default function App() {
     setSlicePosition(viewsRef.current.axial, world);
     setSlicePosition(viewsRef.current.coronal, world);
     setSlicePosition(viewsRef.current.sagittal, world);
+    const b = viewsRef.current.axial.mapper.getInputData().getBounds();
+    updateCrosshair(viewsRef.current.axial, world, b);
+    updateCrosshair(viewsRef.current.coronal, world, b);
+    updateCrosshair(viewsRef.current.sagittal, world, b);
   }, [slices, vol]);
 
-  // DRR render (debounced)
   useEffect(() => {
-    if (!vol || !workerRef.current) return;
-    window.clearTimeout(drrTimer.current);
-    drrTimer.current = window.setTimeout(() => {
-      const copy = vol.data.slice().buffer;
-      const lcopy = vol.labels ? vol.labels.slice().buffer : null;
-      const sdd = sid * 1.15;
-      const req: DrrRequest = {
-        type: 'render', caseId: CASE_ID, buffer: copy, labelBuffer: lcopy,
-        dims: vol.meta.dims, spacing: vol.meta.spacing,
-        yawDeg: yaw, pitchDeg: pitch, rollDeg: roll, sid, sdd, outSize: 200, stepMm: 2.5,
-      };
-      const transfers: Transferable[] = [copy];
-      if (lcopy) transfers.push(lcopy);
-      workerRef.current!.postMessage(req, transfers);
-    }, 60);
-    return () => window.clearTimeout(drrTimer.current);
-  }, [yaw, pitch, roll, sid, vol, tint]);
+    if (!viewsRef.current) return;
+    const [w, l] = WINDOWS[winPreset] ?? WINDOWS['기본'];
+    setSliceWindow(viewsRef.current.axial, w, l);
+    setSliceWindow(viewsRef.current.coronal, w, l);
+    setSliceWindow(viewsRef.current.sagittal, w, l);
+  }, [winPreset]);
 
   // beam overlay
   useEffect(() => {
@@ -140,22 +158,34 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>X-ray Anatomy Lab</h1>
-        <p>CT 단면 · 3D 구조 · 가상 X-ray 연동 학습 (교육용 시뮬레이션)</p>
+        <h1>X-ray <span className="accent">Anatomy Lab</span></h1>
+        <span className="sub">CT 단면 · 3D 구조 · 가상 X-ray 연동 학습 시뮬레이터</span>
+        <span className="badge">교육용 · 비진단</span>
       </header>
-      <main>
-        <section className="grid2">
-          <div className="panel"><h2>Axial (축상)</h2><div ref={axialRef} className="vpwrap" />
-            <input type="range" min={0} max={(vol?.meta.dims[2] ?? 1) - 1} value={slices.axial}
-              onChange={(e) => setSlices((s) => ({ ...s, axial: +e.target.value }))} /></div>
-          <div className="panel"><h2>Coronal (관상)</h2><div ref={coronalRef} className="vpwrap" />
-            <input type="range" min={0} max={(vol?.meta.dims[1] ?? 1) - 1} value={slices.coronal}
-              onChange={(e) => setSlices((s) => ({ ...s, coronal: +e.target.value }))} /></div>
-          <div className="panel"><h2>Sagittal (시상)</h2><div ref={sagittalRef} className="vpwrap" />
-            <input type="range" min={0} max={(vol?.meta.dims[0] ?? 1) - 1} value={slices.sagittal}
-              onChange={(e) => setSlices((s) => ({ ...s, sagittal: +e.target.value }))} /></div>
-          <div className="panel">
-            <h2>3D + X-ray 빔 <label className="inline"><input type="checkbox" checked={showBeam} onChange={(e) => setShowBeam(e.target.checked)} /> 빔 표시</label></h2>
+      <main className="layout">
+        {/* left: 3 CT slices */}
+        <div className="col slices">
+          <div className="cell">
+            <div className="cellhead"><span>Axial</span><select className="winsel" value={winPreset} onChange={(e) => setWinPreset(e.target.value)}>{Object.keys(WINDOWS).map((k) => <option key={k} value={k}>{k}</option>)}</select><input type="range" min={0} max={(vol?.meta.dims[2] ?? 1) - 1} value={slices.axial} onChange={(e) => setSlices((s) => ({ ...s, axial: +e.target.value }))} /></div>
+            <div ref={axialRef} className="vpwrap" />
+          </div>
+          <div className="cell">
+            <div className="cellhead"><span>Coronal</span><input type="range" min={0} max={(vol?.meta.dims[1] ?? 1) - 1} value={slices.coronal} onChange={(e) => setSlices((s) => ({ ...s, coronal: +e.target.value }))} /></div>
+            <div ref={coronalRef} className="vpwrap" />
+          </div>
+          <div className="cell">
+            <div className="cellhead"><span>Sagittal</span><input type="range" min={0} max={(vol?.meta.dims[0] ?? 1) - 1} value={slices.sagittal} onChange={(e) => setSlices((s) => ({ ...s, sagittal: +e.target.value }))} /></div>
+            <div ref={sagittalRef} className="vpwrap" />
+          </div>
+        </div>
+
+        {/* center: 3D */}
+        <div className="col center">
+          <div className="cell fill">
+            <div className="cellhead">
+              <span>3D + X-ray 빔</span>
+              <label className="inline"><input type="checkbox" checked={showBeam} onChange={(e) => setShowBeam(e.target.checked)} /> 빔</label>
+            </div>
             <div ref={volRef} className="vpwrap" />
             <div className="legend">
               <span><i style={{ background: '#e6404d' }} />심장</span>
@@ -164,56 +194,53 @@ export default function App() {
               <span><i style={{ background: '#cc8040' }} />간</span>
               <span><i style={{ background: '#ddd6c0' }} />뼈</span>
             </div>
-            <p className="hint">노란 점 = X-ray 소스 · 파란 면 = 검출기 · 주황 선 = 빔 경로</p>
-          </div>
-        </section>
-        <section className="panel drr">
-          <h2>가상 X-ray (DRR)</h2>
-          <div className="presets">
-            {PRESETS.map((p) => (
-              <button key={p.name} className={preset === p.name ? 'active' : ''} onClick={() => applyPreset(p)}>{p.name}</button>
-            ))}
-          </div>
-          {curPreset && <p className="hint">{curPreset.desc}</p>}
-          <div className="controls">
-            <label>환자 회전 (yaw) {yaw}°
-              <input type="range" min={-180} max={180} value={yaw} onChange={(e) => { setYaw(+e.target.value); setPreset(''); }} /></label>
-            <label>C-arm 각도 (pitch) {pitch}°
-              <input type="range" min={-60} max={60} value={pitch} onChange={(e) => { setPitch(+e.target.value); setPreset(''); }} /></label>
-            <label>검출기 회전 (roll) {roll}°
-              <input type="range" min={-90} max={90} value={roll} onChange={(e) => { setRoll(+e.target.value); setPreset(''); }} /></label>
-            <label>SID {sid}mm
-              <input type="range" min={600} max={1500} step={50} value={sid} onChange={(e) => setSid(+e.target.value)} /></label>
-          </div>
-          <label className="inline tint"><input type="checkbox" checked={tint} onChange={(e) => setTint(e.target.checked)} /> 구조 색상 오버레이 (X-ray 어느 픽셀이 어떤 장기를 지나는지 표시)</label>
-          {drrUrl ? <img className="drrimg" src={drrUrl} alt="DRR" /> : <p>계산 중…</p>}
-          {drrMs !== null && <p className="meta">렌더 {drrMs.toFixed(0)}ms · Beer–Lambert + 삼선형 보간 · 교육용</p>}
-        </section>
-      </main>
-      <footer>
-        <div className="foot-grid">
-          <div className="foot-col">
-            <strong>X-ray Anatomy Lab</strong>
-            <span>방사선 촬영 각도·해부 구조 연동 학습 시뮬레이터</span>
-            <span className="warn">본 서비스는 교육용이며 의료행위·진단·치료 목적이 아닙니다.</span>
-          </div>
-          <div className="foot-col">
-            <span>상호: (주)방사선교육랩 &nbsp;|&nbsp; 대표: 홍길동</span>
-            <span>사업자등록번호: 123-45-67890 &nbsp;|&nbsp; 통신판매업신고: 제2026-서울강남-01234호</span>
-            <span>주소: 서울특별시 강남구 테헤란로 123, 4층</span>
-          </div>
-          <div className="foot-col">
-            <span>고객센터: 02-1234-5678 &nbsp;|&nbsp; 이메일: support@xraylab.example.kr</span>
-            <span>개인정보처리방침 · 이용약관 · 청소년보호정책</span>
-            <span>© 2026 X-ray Anatomy Lab. All rights reserved.</span>
-          </div>
-          <div className="foot-col">
-            <span>데이터: TotalSegmentator 예제 CT (CC BY 4.0)</span>
-            <span>라벨맵: TotalSegmentator total task</span>
-            <span>DRR: Beer–Lambert 광선 적분 (교육용 근사)</span>
           </div>
         </div>
+
+        {/* right: X-ray + controls */}
+        <div className="col right">
+          <div className="cell fill">
+            <div className="cellhead">
+              <div className="tabs">
+                <button className={xrayTab === 'drr' ? 'active' : ''} onClick={() => setXrayTab('drr')}>X-ray</button>
+                <button className={xrayTab === 'pos' ? 'active' : ''} onClick={() => setXrayTab('pos')}>포지셔닝</button>
+              </div>
+              <label className="inline"><input type="checkbox" checked={tint} onChange={(e) => setTint(e.target.checked)} /> 구조색</label>
+            </div>
+            <div className="xraywrap">
+              {xrayTab === 'drr' ? (
+                drrUrl ? <img className="drrimg" src={drrUrl} alt="DRR" /> : <p className="hint">계산 중…</p>
+              ) : (
+                <PositioningPlaceholder vol={vol} axialK={slices.axial} yaw={yaw} pitch={pitch} sid={sid} />
+              )}
+            </div>
+            {drrMs !== null && xrayTab === 'drr' && <p className="meta">{drrMs.toFixed(0)}ms</p>}
+          </div>
+          <div className="cell controls">
+            <div className="presets">
+              {PRESETS.map((p) => (
+                <button key={p.name} className={preset === p.name ? 'active' : ''} onClick={() => applyPreset(p)}>{p.name}</button>
+              ))}
+            </div>
+            {curPreset && <p className="hint">{curPreset.desc}</p>}
+            <label>환자 회전 <span className="val">{yaw}°</span><input type="range" min={-180} max={180} value={yaw} onChange={(e) => { setYaw(+e.target.value); setPreset(''); }} /></label>
+            <label>C-arm 각도 <span className="val">{pitch}°</span><input type="range" min={-60} max={60} value={pitch} onChange={(e) => { setPitch(+e.target.value); setPreset(''); }} /></label>
+            <label>검출기 회전 <span className="val">{roll}°</span><input type="range" min={-90} max={90} value={roll} onChange={(e) => { setRoll(+e.target.value); setPreset(''); }} /></label>
+            <label>SID <span className="val">{sid}mm</span><input type="range" min={600} max={1500} step={50} value={sid} onChange={(e) => setSid(+e.target.value)} /></label>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <span>데이터: TotalSegmentator 예제 CT (CC BY 4.0) · 라벨맵: total task · DRR: Beer–Lambert 근사</span>
+        <span className="right">교육용 시뮬레이션 — 진단·치료 목적 아님</span>
       </footer>
     </div>
   );
+}
+
+// lazy import to avoid circular; simple wrapper
+import PositioningView from './PositioningView';
+function PositioningPlaceholder({ vol, axialK, yaw, pitch, sid }: { vol: Volume | null; axialK: number; yaw: number; pitch: number; sid: number }) {
+  if (!vol) return <p className="hint">로딩…</p>;
+  return <PositioningView vol={vol} axialK={axialK} yawDeg={yaw} pitchDeg={pitch} sid={sid} />;
 }
