@@ -16,6 +16,7 @@ export interface DrrRequest {
   type: 'render';
   caseId: string;
   buffer: ArrayBuffer;
+  labelBuffer: ArrayBuffer | null;
   dims: [number, number, number];
   spacing: [number, number, number];
   yawDeg: number;
@@ -33,6 +34,7 @@ export interface DrrResponse {
   width: number;
   height: number;
   pixels: ArrayBuffer;
+  labelPix: ArrayBuffer | null;
   ms: number;
 }
 

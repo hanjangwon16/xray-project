@@ -34,6 +34,23 @@ export function buildImageData(v: Volume) {
   return imageData;
 }
 
+export function buildLabelData(v: Volume) {
+  if (!v.labels) return null;
+  const imageData = vtkImageData.newInstance({
+    origin: v.meta.origin,
+    spacing: v.meta.spacing,
+    direction: v.meta.direction.flat(),
+  });
+  imageData.setDimensions(v.meta.dims);
+  const scalars = vtkDataArray.newInstance({
+    name: 'LABEL',
+    values: v.labels,
+    numberOfComponents: 1,
+  });
+  imageData.getPointData().setScalars(scalars);
+  return imageData;
+}
+
 export interface SliceView {
   container: HTMLDivElement;
   grw: ReturnType<typeof vtkGenericRenderWindow.newInstance>;
@@ -111,9 +128,22 @@ export interface VolumeView {
   renderer: ReturnType<ReturnType<typeof vtkGenericRenderWindow.newInstance>['getRenderer']>;
 }
 
+// Major structures to show as separate colored surfaces in 3D.
+const SURFACE_LABELS: { id: number; name: string; color: [number, number, number]; opacity: number }[] = [
+  { id: 52, name: '심장', color: [0.9, 0.25, 0.3], opacity: 0.85 },
+  { id: 30, name: '우상엽', color: [0.55, 0.7, 0.95], opacity: 0.4 },
+  { id: 31, name: '우중엽', color: [0.6, 0.75, 0.95], opacity: 0.4 },
+  { id: 32, name: '우하엽', color: [0.5, 0.65, 0.92], opacity: 0.4 },
+  { id: 33, name: '좌상엽', color: [0.55, 0.8, 0.9], opacity: 0.4 },
+  { id: 7, name: '대동맥', color: [0.95, 0.3, 0.3], opacity: 0.8 },
+  { id: 5, name: '간', color: [0.8, 0.5, 0.25], opacity: 0.7 },
+  { id: 1, name: '비장', color: [0.85, 0.35, 0.35], opacity: 0.7 },
+];
+
 export function createVolumeView(
   parent: HTMLElement,
   imageData: ReturnType<typeof buildImageData>,
+  labelData: ReturnType<typeof buildLabelData>,
 ): VolumeView {
   const container = document.createElement('div');
   container.className = 'vp';
@@ -129,11 +159,26 @@ export function createVolumeView(
   const actor = vtkActor.newInstance();
   actor.setMapper(mapper);
   actor.getProperty().setColor(0.85, 0.82, 0.75);
-  actor.getProperty().setOpacity(0.35);
+  actor.getProperty().setOpacity(0.18);
 
   const renderer = grw.getRenderer();
   renderer.addActor(actor);
   renderer.setBackground(0.08, 0.09, 0.12);
+
+  // per-structure colored surfaces from labelmap
+  if (labelData) {
+    for (const s of SURFACE_LABELS) {
+      const smc = vtkImageMarchingCubes.newInstance({ contourValue: s.id - 0.5, computeNormals: true, mergePoints: true });
+      smc.setInputData(labelData);
+      const smap = vtkMapper.newInstance();
+      smap.setInputConnection(smc.getOutputPort());
+      const sact = vtkActor.newInstance();
+      sact.setMapper(smap);
+      sact.getProperty().setColor(s.color[0], s.color[1], s.color[2]);
+      sact.getProperty().setOpacity(s.opacity);
+      renderer.addActor(sact);
+    }
+  }
   renderer.resetCamera();
   // keep camera framed on the anatomy, not the beam geometry
   const b = imageData.getBounds();

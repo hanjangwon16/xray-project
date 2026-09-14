@@ -39,6 +39,7 @@ function huToMu(hu: number): number {
 function render(req: DrrRequest): DrrResponse {
   const t0 = performance.now();
   const vol = new Int16Array(req.buffer);
+  const lab = req.labelBuffer ? new Uint8Array(req.labelBuffer) : null;
   const [nx, ny, nz] = req.dims;
   const [sx, sy, sz] = req.spacing;
   const cx = (nx - 1) / 2, cy = (ny - 1) / 2, cz = (nz - 1) / 2;
@@ -88,8 +89,10 @@ function render(req: DrrRequest): DrrResponse {
     const c1 = c01 * (1 - fy) + c11 * fy;
     return c0 * (1 - fz) + c1 * fz;
   };
+  const labAt = (a: number, bb: number, c: number) => lab ? lab[a + bb * nx + c * nx * ny] : 0;
 
   const pixels = new Float32Array(N * N);
+  const labelPix = lab ? new Uint8Array(N * N) : null;
   const tEnter = Math.max(0, sid - diag);
   const tExit = sid + diag;
   for (let r = 0; r < N; r++) {
@@ -102,6 +105,8 @@ function render(req: DrrRequest): DrrResponse {
       const pz = detC[2] + u[2] * du + v[2] * dv;
       const dir = norm([px - src[0], py - src[1], pz - src[2]]);
       let sum = 0;
+      // accumulate attenuation per label to find dominant structure along ray
+      const labMu = new Map<number, number>();
       for (let t = tEnter; t < tExit; t += step) {
         const wx = src[0] + dir[0] * t;
         const wy = src[1] + dir[1] * t;
@@ -110,9 +115,20 @@ function render(req: DrrRequest): DrrResponse {
         const j = wy / sy + cy;
         const k = wz / sz + cz;
         if (i < -0.5 || j < -0.5 || k < -0.5 || i > nx - 0.5 || j > ny - 0.5 || k > nz - 0.5) continue;
-        sum += huToMu(sample(i, j, k)) * step;
+        const i0 = Math.max(0, Math.min(nx - 1, Math.round(i)));
+        const j0 = Math.max(0, Math.min(ny - 1, Math.round(j)));
+        const k0 = Math.max(0, Math.min(nz - 1, Math.round(k)));
+        const mu = huToMu(sample(i, j, k)) * step;
+        sum += mu;
+        const lid = labAt(i0, j0, k0);
+        if (lid !== 0) labMu.set(lid, (labMu.get(lid) ?? 0) + mu);
       }
       pixels[r * N + c] = Math.exp(-sum);
+      if (labelPix) {
+        let best = 0, bestW = 0;
+        for (const [lid, w] of labMu) if (w > bestW) { bestW = w; best = lid; }
+        labelPix[r * N + c] = best;
+      }
     }
   }
 
@@ -127,10 +143,12 @@ function render(req: DrrRequest): DrrResponse {
     out[i] = 255 - Math.pow(t, gamma) * 255;
   }
   const ms = performance.now() - t0;
-  return { type: 'drr', caseId: req.caseId, width: N, height: N, pixels: out.buffer as ArrayBuffer, ms };
+  return { type: 'drr', caseId: req.caseId, width: N, height: N, pixels: out.buffer as ArrayBuffer, labelPix: labelPix ? labelPix.buffer as ArrayBuffer : null, ms };
 }
 
 self.onmessage = (e: MessageEvent<DrrRequest>) => {
   const res = render(e.data);
-  (self as unknown as Worker).postMessage(res, [res.pixels]);
+  const transfers: Transferable[] = [res.pixels];
+  if (res.labelPix) transfers.push(res.labelPix);
+  (self as unknown as Worker).postMessage(res, transfers);
 };

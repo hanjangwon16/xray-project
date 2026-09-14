@@ -3,6 +3,7 @@ import type { CaseMeta } from './types';
 export interface Volume {
   meta: CaseMeta;
   data: Int16Array;
+  labels: Uint8Array | null;
   center: [number, number, number];
 }
 
@@ -11,6 +12,11 @@ export async function loadCase(caseId: string): Promise<Volume> {
   const meta = (await (await fetch(`${base}/case.json`)).json()) as CaseMeta;
   const buf = await (await fetch(`${base}/${meta.file}`)).arrayBuffer();
   const data = new Int16Array(buf);
+  let labels: Uint8Array | null = null;
+  try {
+    const lbuf = await (await fetch(`${base}/labels_u8.bin`)).arrayBuffer();
+    if (lbuf.byteLength === data.length) labels = new Uint8Array(lbuf);
+  } catch { /* no labels */ }
   const [nx, ny, nz] = meta.dims;
   const [sx, sy, sz] = meta.spacing;
   const [ox, oy, oz] = meta.origin;
@@ -19,10 +25,5 @@ export async function loadCase(caseId: string): Promise<Volume> {
     oy + ((ny - 1) / 2) * sy,
     oz + ((nz - 1) / 2) * sz,
   ];
-  return { meta, data, center };
-}
-
-export function voxelToWorld(v: Volume, i: number, j: number, k: number): [number, number, number] {
-  const { spacing, origin } = v.meta;
-  return [origin[0] + i * spacing[0], origin[1] + j * spacing[1], origin[2] + k * spacing[2]];
+  return { meta, data, labels, center };
 }

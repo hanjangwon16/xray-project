@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { loadCase, type Volume } from './volume';
-import { buildImageData, createSliceView, createVolumeView, setSlicePosition, updateBeam, type SliceView, type VolumeView } from './vtkSetup';
+import { buildImageData, buildLabelData, createSliceView, createVolumeView, setSlicePosition, updateBeam, type SliceView, type VolumeView } from './vtkSetup';
 import { computeBeam } from './beam';
+import { labelColor } from './labels';
 import type { DrrRequest, DrrResponse, ViewName } from './types';
 
 const CASE_ID = 'example_ct_sm';
@@ -27,6 +28,7 @@ export default function App() {
   const [drrUrl, setDrrUrl] = useState<string | null>(null);
   const [drrMs, setDrrMs] = useState<number | null>(null);
   const [showBeam, setShowBeam] = useState(true);
+  const [tint, setTint] = useState(true);
 
   const axialRef = useRef<HTMLDivElement>(null);
   const coronalRef = useRef<HTMLDivElement>(null);
@@ -48,12 +50,13 @@ export default function App() {
       if (cancelled) return;
       setVol(v);
       const imageData = buildImageData(v);
+      const labelData = buildLabelData(v);
       viewsRef.current = {
         axial: createSliceView(axialRef.current!, imageData, 'axial'),
         coronal: createSliceView(coronalRef.current!, imageData, 'coronal'),
         sagittal: createSliceView(sagittalRef.current!, imageData, 'sagittal'),
       };
-      volViewRef.current = createVolumeView(volRef.current!, imageData);
+      volViewRef.current = createVolumeView(volRef.current!, imageData, labelData);
       const w = new Worker(new URL('./drr.worker.ts', import.meta.url), { type: 'module' });
       w.onmessage = (e: MessageEvent<DrrResponse>) => {
         const d = e.data;
@@ -62,8 +65,17 @@ export default function App() {
         const ctx = canvas.getContext('2d')!;
         const img = ctx.createImageData(d.width, d.height);
         const px = new Uint8ClampedArray(d.pixels);
+        const lp = d.labelPix ? new Uint8Array(d.labelPix) : null;
         for (let i = 0; i < px.length; i++) {
-          img.data[i * 4] = px[i]; img.data[i * 4 + 1] = px[i]; img.data[i * 4 + 2] = px[i]; img.data[i * 4 + 3] = 255;
+          const g = px[i];
+          let r = g, gg = g, b = g;
+          if (tint && lp && lp[i] !== 0) {
+            const c = labelColor(lp[i]);
+            r = g * 0.55 + c[0] * 0.45;
+            gg = g * 0.55 + c[1] * 0.45;
+            b = g * 0.55 + c[2] * 0.45;
+          }
+          img.data[i * 4] = r; img.data[i * 4 + 1] = gg; img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = 255;
         }
         ctx.putImageData(img, 0, 0);
         setDrrUrl(canvas.toDataURL('image/png'));
@@ -95,16 +107,19 @@ export default function App() {
     window.clearTimeout(drrTimer.current);
     drrTimer.current = window.setTimeout(() => {
       const copy = vol.data.slice().buffer;
+      const lcopy = vol.labels ? vol.labels.slice().buffer : null;
       const sdd = sid * 1.15;
       const req: DrrRequest = {
-        type: 'render', caseId: CASE_ID, buffer: copy,
+        type: 'render', caseId: CASE_ID, buffer: copy, labelBuffer: lcopy,
         dims: vol.meta.dims, spacing: vol.meta.spacing,
         yawDeg: yaw, pitchDeg: pitch, rollDeg: roll, sid, sdd, outSize: 200, stepMm: 2.5,
       };
-      workerRef.current!.postMessage(req, [copy]);
+      const transfers: Transferable[] = [copy];
+      if (lcopy) transfers.push(lcopy);
+      workerRef.current!.postMessage(req, transfers);
     }, 60);
     return () => window.clearTimeout(drrTimer.current);
-  }, [yaw, pitch, roll, sid, vol]);
+  }, [yaw, pitch, roll, sid, vol, tint]);
 
   // beam overlay
   useEffect(() => {
@@ -142,6 +157,13 @@ export default function App() {
           <div className="panel">
             <h2>3D + X-ray 빔 <label className="inline"><input type="checkbox" checked={showBeam} onChange={(e) => setShowBeam(e.target.checked)} /> 빔 표시</label></h2>
             <div ref={volRef} className="vpwrap" />
+            <div className="legend">
+              <span><i style={{ background: '#e6404d' }} />심장</span>
+              <span><i style={{ background: '#8cb3f2' }} />폐</span>
+              <span><i style={{ background: '#f24d4d' }} />대동맥</span>
+              <span><i style={{ background: '#cc8040' }} />간</span>
+              <span><i style={{ background: '#ddd6c0' }} />뼈</span>
+            </div>
             <p className="hint">노란 점 = X-ray 소스 · 파란 면 = 검출기 · 주황 선 = 빔 경로</p>
           </div>
         </section>
@@ -163,12 +185,34 @@ export default function App() {
             <label>SID {sid}mm
               <input type="range" min={600} max={1500} step={50} value={sid} onChange={(e) => setSid(+e.target.value)} /></label>
           </div>
+          <label className="inline tint"><input type="checkbox" checked={tint} onChange={(e) => setTint(e.target.checked)} /> 구조 색상 오버레이 (X-ray 어느 픽셀이 어떤 장기를 지나는지 표시)</label>
           {drrUrl ? <img className="drrimg" src={drrUrl} alt="DRR" /> : <p>계산 중…</p>}
           {drrMs !== null && <p className="meta">렌더 {drrMs.toFixed(0)}ms · Beer–Lambert + 삼선형 보간 · 교육용</p>}
         </section>
       </main>
       <footer>
-        데이터: TotalSegmentator 예제 CT (CC BY 4.0) · 본 도구는 교육용이며 진단·치료 목적이 아닙니다.
+        <div className="foot-grid">
+          <div className="foot-col">
+            <strong>X-ray Anatomy Lab</strong>
+            <span>방사선 촬영 각도·해부 구조 연동 학습 시뮬레이터</span>
+            <span className="warn">본 서비스는 교육용이며 의료행위·진단·치료 목적이 아닙니다.</span>
+          </div>
+          <div className="foot-col">
+            <span>상호: (주)방사선교육랩 &nbsp;|&nbsp; 대표: 홍길동</span>
+            <span>사업자등록번호: 123-45-67890 &nbsp;|&nbsp; 통신판매업신고: 제2026-서울강남-01234호</span>
+            <span>주소: 서울특별시 강남구 테헤란로 123, 4층</span>
+          </div>
+          <div className="foot-col">
+            <span>고객센터: 02-1234-5678 &nbsp;|&nbsp; 이메일: support@xraylab.example.kr</span>
+            <span>개인정보처리방침 · 이용약관 · 청소년보호정책</span>
+            <span>© 2026 X-ray Anatomy Lab. All rights reserved.</span>
+          </div>
+          <div className="foot-col">
+            <span>데이터: TotalSegmentator 예제 CT (CC BY 4.0)</span>
+            <span>라벨맵: TotalSegmentator total task</span>
+            <span>DRR: Beer–Lambert 광선 적분 (교육용 근사)</span>
+          </div>
+        </div>
       </footer>
     </div>
   );
