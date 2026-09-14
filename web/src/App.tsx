@@ -282,7 +282,7 @@ export default function App() {
       </main>
       </div>
       <footer>
-        <span>데이터: TotalSegmentator 예제 CT (CC BY 4.0) · 라벨맵: total task · DRR: Beer–Lambert 근사</span>
+        <span>데이터: TotalSegmentator CT·full task fast 3mm labelmap (CC BY 4.0) · DRR: Beer–Lambert 근사</span>
         <span className="right">교육용 시뮬레이션 — 진단·치료 목적 아님</span>
       </footer>
     </div>

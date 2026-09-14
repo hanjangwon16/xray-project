@@ -14,7 +14,6 @@ export async function loadCase(caseId: string): Promise<Volume> {
   const data = new Int16Array(buf);
   let labels: Uint8Array | null = null;
   try {
-    if (caseId !== "example_ct_sm") throw new Error("No verified segmentation");
     const lbuf = await (await fetch(`${base}/labels_u8.bin`)).arrayBuffer();
     if (lbuf.byteLength === data.length) labels = new Uint8Array(lbuf);
   } catch { /* no labels */ }

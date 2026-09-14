@@ -94,7 +94,7 @@ J. 한계: 산란·스펙트럼·검출기 응답 미모델링 시 임상 동등
 
 ## 9. 실행 순서와 다음 릴리스
 현재 릴리스: BodyParts3D 변환→5계통 화면→안정 회전→실제 사례 유지→DRR 정지 해상도·응답 동기화→공개 배포 확인.
-다음 릴리스: 구조별 클릭/검색·한글 용어 검수→계통별 개별 opacity→영역별 lazy LOD→같은 사람의 전신 CT+세그멘테이션 확보→부위 landmark 정합 검증→촬영 퀴즈.
+이번 확장: 구조별 클릭/검색·한글 용어 표시→계통별 개별 opacity→TotalSegmentator full task fast 3mm 세그멘테이션 연결→구조 찾기 퀴즈. 아틀라스와 실제 CT는 여전히 서로 다른 인체이므로 좌표 정합은 하지 않는다. 영역별 lazy LOD와 같은 사람의 전신 CT 정합은 데이터가 확보될 때 별도 릴리스로 진행한다.
 신경·혈관은 일반 비조영 CT에서 모두 분할되지 않는다. 신경 세부 구조는 atlas로 학습하고 CT 연동은 검증된 구조만 허용한다. 전신 단일 환자 CT가 확보되지 않으면 부위별 사례로 명시하고 이어붙인 가짜 환자 데이터를 만들지 않는다.
 
 ## 10. 이번 구현 결과 및 잔여 범위
@@ -103,7 +103,9 @@ J. 한계: 산란·스펙트럼·검출기 응답 미모델링 시 임상 동등
 - 정점 gzip 압축으로 전체 전송량 약 45MB. 파일 확장자는 .mesh: .gz에 대한 서버 자동 Content-Encoding과 중복 해제를 방지한다. 브라우저 DecompressionStream 사용.
 - 단독/복수/전체 표시, 투명도, 정면/후면/측면/reset, 제한 회전/휠/shift pan 구현.
 - DRR 320px, 1.5mm sampling, ray-AABB 교차 범위, requestId에 따른 stale 결과 무시 구현.
-- 고정 감쇠 window, 팬텀/DiffDRR 동등 검증, 개별 구조 picking, 완전한 말초신경, 환자별 전신 CT 정합은 후속이다.
+- `example_ct`에 TotalSegmentator full task fast 3mm 원본과 같은 격자의 실제 labelmap을 연결했다. 상복부 사례와 전신 사례 모두 장기·뼈 선택색을 표시할 수 있다.
+- 구조 검색(영문/한글 패턴), 계통별 개별 opacity, 클릭 구조 하이라이트, 구조 찾기 퀴즈를 구현했다.
+- 고정 감쇠 window, 팬텀/DiffDRR 동등 검증, 완전한 말초신경, 환자별 전신 CT 정합은 후속이다.
 - Playwright 로컬: 5계통 단독/전체 선택, 드래그/휠/reset, 사례 전환, 사위 DRR 변경 통과. pageerror 0, document overflow 없음.
 
 ## 11. 전신 탐색에서 영상 비교 진입

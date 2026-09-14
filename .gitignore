@@ -7,3 +7,5 @@ _shot*.mjs
 
 data/bodyparts3d/
 data/verification/
+data/example_seg_full.nii.gz/
+web/public/cases/example_ct/labels_full.nii.gz
