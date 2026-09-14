@@ -93,8 +93,7 @@ function render(req: DrrRequest): DrrResponse {
 
   const pixels = new Float32Array(N * N);
   const labelPix = lab ? new Uint8Array(N * N) : null;
-  const tEnter = Math.max(0, sid - diag);
-  const tExit = sid + diag;
+  const half = [(nx-1)*sx/2,(ny-1)*sy/2,(nz-1)*sz/2];
   for (let r = 0; r < N; r++) {
     const dv = detHalf - (2 * detHalf * r) / (N - 1); // row 0 = +v (up)
     for (let c = 0; c < N; c++) {
@@ -104,10 +103,15 @@ function render(req: DrrRequest): DrrResponse {
       const py = detC[1] + u[1] * du + v[1] * dv;
       const pz = detC[2] + u[2] * du + v[2] * dv;
       const dir = norm([px - src[0], py - src[1], pz - src[2]]);
+      let tEnter=0,tExit=Math.hypot(px-src[0],py-src[1],pz-src[2]);
+      for(let axis=0;axis<3;axis++){
+        if(Math.abs(dir[axis])<1e-9){if(Math.abs(src[axis])>half[axis])tExit=-1;}
+        else{const a=(-half[axis]-src[axis])/dir[axis],b=(half[axis]-src[axis])/dir[axis];tEnter=Math.max(tEnter,Math.min(a,b));tExit=Math.min(tExit,Math.max(a,b));}
+      }
       let sum = 0;
       // accumulate attenuation per label to find dominant structure along ray
       const labMu = new Map<number, number>();
-      for (let t = tEnter; t < tExit; t += step) {
+      for (let t = tEnter + step/2; t < tExit; t += step) {
         const wx = src[0] + dir[0] * t;
         const wy = src[1] + dir[1] * t;
         const wz = src[2] + dir[2] * t;
@@ -143,7 +147,7 @@ function render(req: DrrRequest): DrrResponse {
     out[i] = Math.pow(t, gamma) * 255;
   }
   const ms = performance.now() - t0;
-  return { type: 'drr', caseId: req.caseId, width: N, height: N, pixels: out.buffer as ArrayBuffer, labelPix: labelPix ? labelPix.buffer as ArrayBuffer : null, ms };
+  return { type: 'drr', requestId: req.requestId, caseId: req.caseId, width: N, height: N, pixels: out.buffer as ArrayBuffer, labelPix: labelPix ? labelPix.buffer as ArrayBuffer : null, ms };
 }
 
 self.onmessage = (e: MessageEvent<DrrRequest>) => {

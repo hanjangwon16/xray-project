@@ -14,6 +14,7 @@ export type ViewName = 'axial' | 'coronal' | 'sagittal';
 
 export interface DrrRequest {
   type: 'render';
+  requestId: number;
   caseId: string;
   buffer: ArrayBuffer;
   labelBuffer: ArrayBuffer | null;
@@ -30,6 +31,7 @@ export interface DrrRequest {
 
 export interface DrrResponse {
   type: 'drr';
+  requestId: number;
   caseId: string;
   width: number;
   height: number;

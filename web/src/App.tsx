@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import AtlasView from './AtlasView';
 import { loadCase, type Volume } from './volume';
 import { buildImageData, buildLabelData, createSliceView, createVolumeView, setSlicePosition, updateBeam, updateCrosshair, setSliceWindow, updateSlicePlanes, type SliceView, type VolumeView } from './vtkSetup';
 import { computeBeam } from './beam';
@@ -18,6 +19,7 @@ const PRESETS: Preset[] = [
 ];
 
 export default function App() {
+  const [workspace,setWorkspace] = useState<'atlas'|'case'>('atlas');
   const [activePlane,setActivePlane] = useState<ViewName>('axial');
   const [mode,setMode] = useState<'ct'|'xray'>('ct');
   const [selectedOrgan,setSelectedOrgan] = useState('');
@@ -49,6 +51,7 @@ export default function App() {
   const volViewRef = useRef<VolumeView | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const drrTimer = useRef<number>(0);
+  const requestIdRef = useRef(0);
 
   const applyPreset = useCallback((p: Preset) => {
     setPreset(p.name);
@@ -79,6 +82,7 @@ export default function App() {
       const w = new Worker(new URL('./drr.worker.ts', import.meta.url), { type: 'module' });
       w.onmessage = (e: MessageEvent<DrrResponse>) => {
         const d = e.data;
+        if(d.requestId !== requestIdRef.current) return;
         const canvas = document.createElement('canvas');
         canvas.width = d.width; canvas.height = d.height;
         const ctx = canvas.getContext('2d')!;
@@ -115,16 +119,16 @@ export default function App() {
     const lcopy = vol.labels ? vol.labels.slice().buffer : null;
     const sdd = sid * 1.15;
     const req: DrrRequest = {
-      type: 'render', caseId: caseId, buffer: copy, labelBuffer: lcopy,
+      type: 'render', requestId: ++requestIdRef.current, caseId: caseId, buffer: copy, labelBuffer: lcopy,
       dims: vol.meta.dims, spacing: vol.meta.spacing,
-      yawDeg: yaw, pitchDeg: pitch, rollDeg: roll, sid, sdd, outSize: 200, stepMm: 2.5,
+      yawDeg: yaw, pitchDeg: pitch, rollDeg: roll, sid, sdd, outSize: 320, stepMm: 1.5,
     };
     window.clearTimeout(drrTimer.current);
     drrTimer.current = window.setTimeout(() => {
       const transfers: Transferable[] = [copy];
       if (lcopy) transfers.push(lcopy);
       workerRef.current?.postMessage(req, transfers);
-    }, 60);
+    }, 180);
     return () => window.clearTimeout(drrTimer.current);
   }, [yaw, pitch, roll, sid, vol, tint]);
 
@@ -184,7 +188,7 @@ export default function App() {
         volViewRef.current.grw.resize();volViewRef.current.grw.getRenderWindow().render();
       }
     });
-  },[activePlane,mode,vol]);
+  },[activePlane,mode,vol,workspace]);
   const curPreset = PRESETS.find((p) => p.name === preset);
 
   return (
@@ -194,6 +198,9 @@ export default function App() {
         <span className="sub">CT 단면 · 3D 구조 · 가상 X-ray 연동 학습 시뮬레이터</span>
         <select className="winsel" value={caseId} onChange={(e) => setCaseId(e.target.value)}>{CASES.map((cs) => <option key={cs.id} value={cs.id}>{cs.name}</option>)}</select><span className="badge">교육용 · 비진단</span>
       </header>
+      <nav className="top-workspaces"><button className={workspace==='atlas'?'active':''} onClick={()=>setWorkspace('atlas')}>전신 · 계통별 탐색</button><button className={workspace==='case'?'active':''} onClick={()=>setWorkspace('case')}>실제 CT · X-ray 사례</button></nav>
+      {workspace==='atlas' && <AtlasView/>}
+      <div style={{display:workspace==='case'?'contents':'none'}}>
       <div className="guide">① 복부 3D에서 장기 위치 확인 → ② CT 슬라이더로 절단 위치 이동 → ③ 같은 높이의 단면 비교 · X-ray는 여러 구조가 겹친 투영 영상입니다.</div>
       <nav className="workspace-nav">
         <button className={mode==='ct'?'active':''} onClick={()=>setMode('ct')}>CT 단면 학습</button>
@@ -273,6 +280,7 @@ export default function App() {
           </div>
         </div>
       </main>
+      </div>
       <footer>
         <span>데이터: TotalSegmentator 예제 CT (CC BY 4.0) · 라벨맵: total task · DRR: Beer–Lambert 근사</span>
         <span className="right">교육용 시뮬레이션 — 진단·치료 목적 아님</span>
