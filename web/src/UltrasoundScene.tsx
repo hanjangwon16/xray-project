@@ -167,7 +167,7 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
       update.current=()=>{};reset.current=()=>{};focus.current=()=>{};skinOpacity.current=()=>{};emphasize.current=()=>{};grw.delete();owned.reverse().forEach(o=>o.delete());
     };
   },[volume]);
-  useEffect(()=>emphasize.current(highlightedOrgan),[highlightedOrgan,volume]);
+  useEffect(()=>{emphasize.current(highlightedOrgan);if(highlightedOrgan!==undefined)setInside(true);},[highlightedOrgan,volume]);
   useEffect(()=>update.current(settings),[volume,settings]);
   useEffect(()=>setInside(volume.kind==='anatomy'),[volume]);
   useEffect(()=>{if(focusRequest)focus.current();},[focusRequest]);

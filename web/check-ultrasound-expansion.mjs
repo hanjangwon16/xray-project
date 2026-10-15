@@ -33,8 +33,11 @@ try{
   await setting('좌우 위치',Math.round((old+2)*2)/2);assert.notEqual(await pixels(),before);
   assert.equal(await page.getByRole('button',{name:'간',exact:true}).getAttribute('aria-pressed'),'true');
   assert.equal(await page.getByRole('button',{name:'실제 간 참고 영상 ↗',exact:true}).isVisible(),true);
+  await page.getByRole('button',{name:'피부 보기',exact:true}).click();
   const scene=page.locator('.us-scene-canvas'),context=await scene.screenshot(),signal=await pixels();
   await page.getByRole('checkbox',{name:'선택 장기 강조',exact:true}).check();
+  await page.getByRole('button',{name:'피부 보기',exact:true}).waitFor({state:'visible'});
+  assert.equal(await page.getByRole('button',{name:'피부 보기',exact:true}).isVisible(),true,'Emphasis must reveal organs from skin view');
   assert.notDeepEqual(await scene.screenshot(),context);assert.equal(await pixels(),signal,'3D emphasis must preserve B-mode signal');
   await page.getByRole('checkbox',{name:'구조 해설색',exact:true}).check();
   await page.screenshot({path:'/tmp/xray-feedback-highlight.png'});
