@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
-import {DEFAULT_PROBE,probeGeometry,rayPoint,imagePoint,renderUltrasound,sample,scatter} from './src/ultrasound.ts';
+import {DEFAULT_PROBE,probeGeometry,rayPoint,imagePoint,beamExtent,renderUltrasound,sample,scatter,material} from './src/ultrasound.ts';
 import {computeBeam} from './src/beam.ts';
 import {renderDrr} from './src/drr.ts';
 const close=(a,b,tol=1e-7)=>assert.ok(Math.abs(a-b)<tol,`${a} vs ${b}`);
 const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
 const v={data:new Int16Array(100*80*70),labels:null,dims:[100,80,70],spacing:[1,1,1],origin:[-50,-40,-35],kind:'human'};
 const s={...DEFAULT_PROBE,depth:60};
+assert.notDeepEqual(material(20,8,'anatomy'),material(20,8,'human'),'Phantom fluid IDs must not reinterpret CT adrenal labels');
 for(const inward of [[1,0,0],[0,1,0],[0,0,-1]]) {
   const surface=probeGeometry(v,{...s,contact:{point:[0,0,0],inward}});
   assert.equal(surface.contact,true);surface.inward.forEach((n,i)=>close(n,inward[i]));
@@ -25,6 +26,14 @@ for(const rotation of [-180,-30,0,90,180])for(const tilt of [-35,0,35])for(const
   p.forEach((x,i)=>close(x,image[i]));
 }
 const ramp={...v,data:Float32Array.from({length:100*80*70},(_,i)=>i%100+2*(Math.floor(i/100)%80)+3*Math.floor(i/8000))};
+for(const probe of ['linear','curved'])for(const width of [15,50,70])for(const sectorAngle of [30,70,100]){
+  const pose={...s,probe,width,sectorAngle,standoff:12},g=probeGeometry(v,pose);
+  for(const line of [.2,.5,.8]){
+    const p=rayPoint(g,pose,line,25),delta=p.map((n,i)=>n-g.origin[i]),u=(dot(delta,g.across)/beamExtent(pose)+1)/2*1000,row=dot(delta,g.inward)/pose.depth*1000;
+    const q=imagePoint(g,pose,u,1001,1001,row);assert.ok(q);p.forEach((n,i)=>close(n,q[i]));
+  }
+  const contact=probeGeometry(v,{...pose,standoff:0});close(Math.hypot(...g.origin.map((n,i)=>n-contact.origin[i])),12);
+}
 close(sample(ramp,[-39.75,-19.5,-4.25]),10.25+2*20.5+3*30.75);
 assert.equal(sample(ramp,[-500,0,0]),null);
 const normal=renderUltrasound(v,s,128),repeat=renderUltrasound(v,s,128);
@@ -56,11 +65,16 @@ const labels=new Uint8Array(gunzipSync(readFileSync(new URL(meta.file,folder))))
 assert.equal(labels.length,meta.dims.reduce((a,b)=>a*b,1));
 assert.equal(createHash('sha256').update(labels).digest('hex'),meta.sha256);
 assert.ok((meta.dims[2]-1)*meta.spacing[2]>1600,'Human phantom must include full body height');
-for(const id of [1,2,3,6,10,11])assert.ok(meta.counts[id]>1000);
+for(const id of [1,2,3,5,6,7,8,9,10,11])assert.ok(meta.counts[id]>20);
+const anatomySurfaces=gunzipSync(readFileSync(new URL(meta.surfaceFile,folder)));assert.equal(createHash('sha256').update(anatomySurfaces).digest('hex'),meta.surfaceSha256);
+assert.deepEqual(meta.surfaces.map(s=>s.id).sort((a,b)=>a-b),[0,1,2,3,5,6,7,8,9,11]);
+assert.ok(meta.surfaces.find(s=>s.id===0).triangles<40000,'Whole body picking must use prepared lightweight surface');
 const centroidX=id=>{let sum=0,n=0;labels.forEach((label,i)=>{if(label===id){sum+=meta.origin[0]+i%meta.dims[0]*meta.spacing[0];n++;}});return sum/n;};
 assert.ok(centroidX(2)>0&&centroidX(3)<0,'Kidneys must retain patient laterality');
 const anatomy={data:Int16Array.from(labels,id=>id===0?-1000:id===11?1000:20),labels,dims:meta.dims,spacing:meta.spacing,origin:meta.origin,kind:'anatomy'};
 assert.equal(renderUltrasound(anatomy,DEFAULT_PROBE,64).reference,null,'Anatomical materials must not be presented as acquired CT');
+const gelFrame=renderUltrasound(anatomy,{...DEFAULT_PROBE,height:69.6,lateral:56.4,standoff:20},64);
+assert.ok(gelFrame.coverage>.1&&gelFrame.pixels.some(n=>n>40),'Coupled gel must preserve tissue echoes after the standoff');
 const usFolder=new URL('./public/ultrasound/segthy/',import.meta.url),usMeta=JSON.parse(readFileSync(new URL('case.json',usFolder),'utf8'));
 const acquired={data:new Uint8Array(gunzipSync(readFileSync(new URL(usMeta.file,usFolder)))),labels:new Uint8Array(gunzipSync(readFileSync(new URL(usMeta.labels,usFolder)))),dims:usMeta.dims,spacing:usMeta.spacing,origin:usMeta.origin,kind:'acquired'};
 const surfaces=gunzipSync(readFileSync(new URL(usMeta.surfaceFile,usFolder)));

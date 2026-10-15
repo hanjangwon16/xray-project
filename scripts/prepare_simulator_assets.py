@@ -91,7 +91,10 @@ def main():
                 'changes': 'Original image and mask, no pixel modifications',
             })
         (folder / 'BUSBRA-LICENSE.txt').write_bytes(archive.read('BUSBRA/LICENSE.txt'))
-    write_json(folder / 'catalog.json', {'cases': cases, 'reviewStatus': 'Dataset labels; not individually clinically validated'})
+    catalog_path=folder/'catalog.json'
+    if catalog_path.exists():
+        cases.extend(c for c in json.loads(catalog_path.read_text())['cases'] if c['id'].startswith(('kidney-real-','lus-real-')))
+    write_json(catalog_path, {'cases': cases, 'reviewStatus': 'Dataset labels; not individually clinically validated'})
     print(json.dumps({'phantom_voxels': len(raw), 'teaching_cases': len(cases)}, ensure_ascii=False))
 
 

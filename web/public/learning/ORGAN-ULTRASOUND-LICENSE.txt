@@ -1,0 +1,5 @@
+Kaur & Singh (2024), doi:10.17632/h6jc4xm4py.1
+
+Chen & Zhou (2026), doi:10.17632/cwc37g672d.1
+
+CC BY 4.0: https://creativecommons.org/licenses/by/4.0/ . Original JPEGs unchanged. LUS masks derived from original organ polygons. No endorsement implied. These are separate patients, not registered to the body phantom.

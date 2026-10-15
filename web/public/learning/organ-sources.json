@@ -1,0 +1,396 @@
+[
+  {
+    "dataset": "h6jc4xm4py",
+    "version": 1,
+    "archive": "kidney-ultrasound.zip",
+    "url": "https://data.mendeley.com/public-files/datasets/h6jc4xm4py/files/3793a043-ad32-4c9b-b038-2d0b98aadf2f/file_downloaded",
+    "sha256": "d4145a5b14db5778298081bcd0db6d3cd423a693bd54c5112a83d6f1467136a8",
+    "sourceImageCount": 9416,
+    "license": "CC BY 4.0",
+    "exports": [
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_1.JPG",
+        "file": "kidney-real-1.jpg",
+        "sha256": "8f935ec5562d4661bfc2f7f19739793fea1f31cfb65c48b1126758b16b2ec489",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_10.JPG",
+        "file": "kidney-real-2.jpg",
+        "sha256": "dac60664e0bda2c2ca7d16d1597fb01314f3efe1740de8428d8bbb6f1b777f3e",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_100.JPG",
+        "file": "kidney-real-3.jpg",
+        "sha256": "e5954e3edddeaf34510ad3556c00cfef9f79745bb49d932a5cb4edbaf46376c7",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_1000.JPG",
+        "file": "kidney-real-4.jpg",
+        "sha256": "25c30ea0fe346313d2cbd7e8991641783a3020c54205a32e997873f3796dc675",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_1001.JPG",
+        "file": "kidney-real-5.jpg",
+        "sha256": "a5a43a26052593e051eecede89a695bd69f29b05e5e5660d3c4e8fabd9a0fcaa",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_1002.JPG",
+        "file": "kidney-real-6.jpg",
+        "sha256": "bca284a1b10e5aaaabb8ce843ba91e6f7a14b8de6b9d0da1f5d54d9d6870a62e",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_1003.JPG",
+        "file": "kidney-real-7.jpg",
+        "sha256": "9b9a989664aaf5a092f5523e9be7ed9724685273fd56230d0c6f87a803c95d5b",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/Normal/Normal_1004.JPG",
+        "file": "kidney-real-8.jpg",
+        "sha256": "bc880c8004d048023d81ab0c134045adb94ef14141355e44d08736eacf236fe5",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_1.JPG",
+        "file": "kidney-real-9.jpg",
+        "sha256": "5aff973aa8176f3230989504170d749e1cd734ba3a06fec5a36f5b8dba89bcf8",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_10.JPG",
+        "file": "kidney-real-10.jpg",
+        "sha256": "c314a64a194c630b2ede3adcc749d81ce80939027d3bf9a27793f35bba559e8e",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_100.JPG",
+        "file": "kidney-real-11.jpg",
+        "sha256": "0537d76a0e1d7011ec66b0be70e0d7bf28728d41cb2a26b0d42350ea1fdf4e73",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_1000.JPG",
+        "file": "kidney-real-12.jpg",
+        "sha256": "5a6360484243403fbf1618c014fcd62932a6e4c7908f8614f6dc028f8e47be22",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_1001.JPG",
+        "file": "kidney-real-13.jpg",
+        "sha256": "551aac933335a5d9dd1c3f214481547b91a50214d81dd1b65a8d6585ef98b395",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_1002.JPG",
+        "file": "kidney-real-14.jpg",
+        "sha256": "5a6360484243403fbf1618c014fcd62932a6e4c7908f8614f6dc028f8e47be22",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_1003.JPG",
+        "file": "kidney-real-15.jpg",
+        "sha256": "20b3bd1aace6a4025555ebf654a5cedad57170a8c1499b247db67a5a8898512a",
+        "organIds": [
+          2,
+          3
+        ]
+      },
+      {
+        "member": "my dataset final 512x512(implemented)/stone/Stone_1004.JPG",
+        "file": "kidney-real-16.jpg",
+        "sha256": "0de3d07dc36f16e883f29abc99cb8a1159d062d02e0f59e747d84a54bec1c586",
+        "organIds": [
+          2,
+          3
+        ]
+      }
+    ]
+  },
+  {
+    "dataset": "cwc37g672d",
+    "version": 1,
+    "archive": "lus-7seg.zip",
+    "url": "https://data.mendeley.com/public-files/datasets/cwc37g672d/files/a14dbc9c-7193-4434-ba5f-41fe541a7828/file_downloaded",
+    "sha256": "edde42182d385da431dbe71d863e1a69520b10ec8b0efcdcbf07888cc0deda40",
+    "sourceImageCount": 10507,
+    "license": "CC BY 4.0",
+    "exports": [
+      {
+        "member": "Patient_0001/FPH/1.2.826.0.1.3680043.2.461.12739067.1051322454.jpg",
+        "file": "lus-real-1.jpg",
+        "sha256": "71e1ec46d8a5201bd40c0c336ba9b73fea2ee06d76e208c7ae5fc1d2d5586dc0",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0001/FPH/1.2.826.0.1.3680043.2.461.12739068.860427673.jpg",
+        "file": "lus-real-2.jpg",
+        "sha256": "6aa0cb63f3137eeef0b2c176c51456afaae71665566156f06824bb35c9759043",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0003/FPH/1.2.826.0.1.3680043.2.461.13828600.3486213152.jpg",
+        "file": "lus-real-3.jpg",
+        "sha256": "9cdb0a7c26673ffc41d021a69df34953c8109cdaf576faf6fbbce9ac971c1d35",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0007/FPH/1.2.826.0.1.3680043.2.461.11981291.4262829471.jpg",
+        "file": "lus-real-4.jpg",
+        "sha256": "c618302dc7121e26fc8b41f4f386e27a5a97b2cf3520c593b2281bb1c9280c5a",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0001/GBH/1.2.826.0.1.3680043.2.461.12739068.1596961029.jpg",
+        "file": "lus-real-5.jpg",
+        "sha256": "32f27f6aad3bc6db5faee1130cea1f6455d9365aef1d3c72b4204cc61a9a2596",
+        "organIds": [
+          5,
+          8
+        ]
+      },
+      {
+        "member": "Patient_0002/GBH/1.2.826.0.1.3680043.2.461.11465292.1272841118.jpg",
+        "file": "lus-real-6.jpg",
+        "sha256": "2d779b317a4a0fba1470ebd88e38da89d8338b3dedd4946002624b40b07bb448",
+        "organIds": [
+          5,
+          8
+        ]
+      },
+      {
+        "member": "Patient_0002/GBH/1.2.826.0.1.3680043.2.461.11465292.225503559.jpg",
+        "file": "lus-real-7.jpg",
+        "sha256": "de0ee806dd1d8dd0e834704484b9a9fad129e38f1dc6fef33d19c93752390c0f",
+        "organIds": [
+          5,
+          8
+        ]
+      },
+      {
+        "member": "Patient_0004/GBH/1.2.826.0.1.3680043.2.461.11819518.1215603069.jpg",
+        "file": "lus-real-8.jpg",
+        "sha256": "b6b2e461ffac7212acb89e3818ad2d9440d85426ae0cc5a10da5a50ad201630f",
+        "organIds": [
+          5,
+          8
+        ]
+      },
+      {
+        "member": "Patient_0001/LHA/1.2.826.0.1.3680043.2.461.12739066.2737778217.jpg",
+        "file": "lus-real-9.jpg",
+        "sha256": "379632b71590baafa8308c60c4304bb01d4dc7ad46a1d29119c28559897f7d1a",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0019/LHA/1.2.826.0.1.3680043.2.461.13472235.1844258588.jpg",
+        "file": "lus-real-10.jpg",
+        "sha256": "6c540aa7d5a92e588751eef157e98ac4022d7eb9b36115b11d5d7c8eac799465",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0022/LHA/1.2.826.0.1.3680043.2.461.12081784.137472329.jpg",
+        "file": "lus-real-11.jpg",
+        "sha256": "895225b5549ba647ca0be0bf6517ceb02efd74cac25833d22d6b5efd18263f2e",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0023/LHA/1.2.826.0.1.3680043.2.461.11862532.2338490573.jpg",
+        "file": "lus-real-12.jpg",
+        "sha256": "47491404b26f7c15ae5062a25fc0aac4d59426b6e17e69e2621158c3959025f4",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0001/LHP/1.2.826.0.1.3680043.2.461.12739067.2064167716.jpg",
+        "file": "lus-real-13.jpg",
+        "sha256": "65f6a0afe71bcc7b968f2da4e9d46a88d0e47f46a0cd6285a94124f16d9b1f4a",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0030/LHP/1.2.826.0.1.3680043.2.461.13709826.1827736984.jpg",
+        "file": "lus-real-14.jpg",
+        "sha256": "2efc98df7a0e8851a9f5d7aca919796e4f760b0183df60906112548e0bf58012",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0038/LHP/1.2.826.0.1.3680043.2.461.12200457.4063143056.jpg",
+        "file": "lus-real-15.jpg",
+        "sha256": "caa95f68c77d3980900b5db0696bde237434cd5821fb63b1f1a32407ae44d6e7",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0039/LHP/1.2.826.0.1.3680043.2.461.13990462.4088704962.jpg",
+        "file": "lus-real-16.jpg",
+        "sha256": "ced428de906be8c3016252621bbe3c38423981e2a987e55c3073e84d46ac8011",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0001/LHV/1.2.826.0.1.3680043.2.461.12739066.4081297958.jpg",
+        "file": "lus-real-17.jpg",
+        "sha256": "2140722fb1546037b2f32048c1ac1a5f1d2f4e1a32753b7d8b500a9ee7f02cd1",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0013/LHV/1.2.826.0.1.3680043.2.461.11768485.2727919185.jpg",
+        "file": "lus-real-18.jpg",
+        "sha256": "18dabe80e70aa65ff8e53493ff431b0404a46e399de6c23e8c4a09075657a39c",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0014/LHV/1.2.826.0.1.3680043.2.461.13939194.3196164529.jpg",
+        "file": "lus-real-19.jpg",
+        "sha256": "e25f0ced8c35fe6794c8cdf5db782f36d3a082774c1b3c88c1051246a332af83",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0015/LHV/1.2.826.0.1.3680043.2.461.11446916.2848937172.jpg",
+        "file": "lus-real-20.jpg",
+        "sha256": "b3b154664077b2a9b6cf995ae16c3926231c8a2a142cc0b4277b9d5c3a4c853e",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0001/RH/1.2.826.0.1.3680043.2.461.12739067.3993872931.jpg",
+        "file": "lus-real-21.jpg",
+        "sha256": "4b4a6b23b18fbaa96c8db94e9900d25e07af66d8fc42448e56442410852c0994",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0003/RH/1.2.826.0.1.3680043.2.461.13828599.4005637437.jpg",
+        "file": "lus-real-22.jpg",
+        "sha256": "3f8abf9e464e1e0c125bf1174bf5415221d7cf3f4c26e244cc1d295c8e1aef8d",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0004/RH/1.2.826.0.1.3680043.2.461.11819518.767814977.jpg",
+        "file": "lus-real-23.jpg",
+        "sha256": "5931293cab7d41ba491b2a00f198eb18b2fe28db5f43965c2e28ee0cb1c196c0",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0005/RH/1.2.826.0.1.3680043.2.461.11762204.2785378263.jpg",
+        "file": "lus-real-24.jpg",
+        "sha256": "9c1f9a66071c353a963b8506f1636d0102981142e2b1f5ec40e4bf3b993efded",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0001/SPH/1.2.826.0.1.3680043.2.461.12739067.2213470211.jpg",
+        "file": "lus-real-25.jpg",
+        "sha256": "8831b9f0628ddf794325bb6a6551aedb5dc1e24a87dccf8179f3824dd3cfa3d7",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0001/SPH/1.2.826.0.1.3680043.2.461.12739067.3474463273.jpg",
+        "file": "lus-real-26.jpg",
+        "sha256": "4274875869f2bfaaec3dda39f362fb52d80dd35d85e4fe2d298fde2f5225d307",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0026/SPH/1.2.826.0.1.3680043.2.461.12006044.2978746055.jpg",
+        "file": "lus-real-27.jpg",
+        "sha256": "2969a4981d8e801003a1b89f1505389d74f9b25047d5df038eb158df469d13d2",
+        "organIds": [
+          5
+        ]
+      },
+      {
+        "member": "Patient_0103/SPH/1.2.826.0.1.3680043.2.461.12952219.4013985209.jpg",
+        "file": "lus-real-28.jpg",
+        "sha256": "1ac221da8d624ab33d65e8123bf4d5dc1257e25f15f38fe0360ad1c739f02e0a",
+        "organIds": [
+          5
+        ]
+      }
+    ]
+  }
+]

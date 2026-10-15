@@ -23,6 +23,7 @@ const PRESETS: Preset[] = [
 
 export default function App() {
   const [workspace,setWorkspace] = useState<'atlas'|'case'|'ultrasound'|'library'>('atlas');
+  const [libraryOrgan,setLibraryOrgan]=useState<number|undefined>();
   const pendingFocus=useRef<Vec3|null>(null);
   const [usInitial,setUsInitial]=useState<{organ:number;world?:Vec3;source?:'human'|'anatomy'}>({organ:2});
   const [caseError,setCaseError]=useState('');
@@ -210,12 +211,12 @@ export default function App() {
       </header>
       <nav className="top-workspaces" aria-label="학습 작업 공간"><button className={workspace==='atlas'?'active':''} onClick={()=>setWorkspace('atlas')}>전신 · 계통별 탐색</button><button className={workspace==='case'?'active':''} onClick={()=>setWorkspace('case')}>실제 CT · X-ray 사례</button><button className={workspace==='ultrasound'?'active':''} onClick={()=>setWorkspace('ultrasound')}>초음파 촬영 연습</button><button className={workspace==='library'?'active':''} onClick={()=>setWorkspace('library')}>실제 영상 자료</button></nav>
       {workspace==='atlas' && <AtlasView onUltrasound={id=>{setUsInitial({organ:id,source:id===5?'human':'anatomy'});setWorkspace('ultrasound');}}/>}
-      {workspace==='ultrasound' && <UltrasoundView initialOrgan={usInitial.organ} initialWorld={usInitial.world} initialSource={usInitial.source} onOpenCase={(nextMode,p)=>{
+      {workspace==='ultrasound' && <UltrasoundView initialOrgan={usInitial.organ} initialWorld={usInitial.world} initialSource={usInitial.source} onOpenReference={(organ,source)=>{setUsInitial({organ,source});setLibraryOrgan(organ);setWorkspace('library');}} onOpenCase={(nextMode,p)=>{
         if(caseId==='example_ct'&&vol){const ijk=p.map((x,i)=>Math.max(0,Math.min(vol.meta.dims[i]-1,Math.round((x-vol.meta.origin[i])/vol.meta.spacing[i]))));setSlices({sagittal:ijk[0],coronal:ijk[1],axial:ijk[2]});}
         else {pendingFocus.current=p;setCaseId('example_ct');}
         setSelectedOrgan('초음파 빔 중앙 위치');setMode(nextMode);setActivePlane('axial');setShowBeam(nextMode==='xray');setWorkspace('case');
       }}/>}
-      {workspace==='library' && <ImagingLibrary/>}
+      {workspace==='library' && <ImagingLibrary initialOrgan={libraryOrgan}/>}
       <div style={{display:workspace==='case'?'contents':'none'}}>
       {caseError&&<div role="alert" className="us-error">{caseError}<button onClick={()=>setCaseRetry(n=>n+1)}>CT 다시 불러오기</button></div>}
       <div className="guide">① 복부 3D에서 장기 위치 확인 → ② CT 슬라이더로 절단 위치 이동 → ③ 같은 높이의 단면 비교 · X-ray는 여러 구조가 겹친 투영 영상입니다.</div>

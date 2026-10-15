@@ -34,7 +34,81 @@
   "file": "materials.mesh",
   "skin": "skin.mesh",
   "skinVertices": 610146,
-  "sha256": "3e79f178641e9b196268ae61c609500e42fb28fe5bdb5a98e0bb5df955933b0b",
+  "surfaceFile": "surfaces.mesh",
+  "surfaces": [
+    {
+      "id": 0,
+      "vertices": 15530,
+      "triangles": 31348,
+      "offset": 0,
+      "bytes": 874288
+    },
+    {
+      "id": 11,
+      "vertices": 150653,
+      "triangles": 301806,
+      "offset": 874288,
+      "bytes": 8444568
+    },
+    {
+      "id": 1,
+      "vertices": 1554,
+      "triangles": 3104,
+      "offset": 9318856,
+      "bytes": 86960
+    },
+    {
+      "id": 2,
+      "vertices": 1492,
+      "triangles": 2980,
+      "offset": 9405816,
+      "bytes": 83488
+    },
+    {
+      "id": 3,
+      "vertices": 1462,
+      "triangles": 2920,
+      "offset": 9489304,
+      "bytes": 81808
+    },
+    {
+      "id": 6,
+      "vertices": 3902,
+      "triangles": 7800,
+      "offset": 9571112,
+      "bytes": 218448
+    },
+    {
+      "id": 5,
+      "vertices": 9816,
+      "triangles": 19600,
+      "offset": 9789560,
+      "bytes": 549184
+    },
+    {
+      "id": 7,
+      "vertices": 1414,
+      "triangles": 2824,
+      "offset": 10338744,
+      "bytes": 79120
+    },
+    {
+      "id": 8,
+      "vertices": 486,
+      "triangles": 968,
+      "offset": 10417864,
+      "bytes": 27152
+    },
+    {
+      "id": 9,
+      "vertices": 1040,
+      "triangles": 2076,
+      "offset": 10445016,
+      "bytes": 58176
+    }
+  ],
+  "surfaceSha256": "41ffd8f32b64fd21b2c3ee6edf568df254f92f644ebb9dbb2779a1408627f87a",
+  "sha256": "365a559eb617d964a73fb4235dfe2713b3f0af6ca459b1d2b7e81d0d037eadef",
   "materials": {
     "0": "air",
     "10": "generic soft tissue",
@@ -42,16 +116,24 @@
     "1": "spleen",
     "2": "right kidney",
     "3": "left kidney",
-    "6": "stomach"
+    "5": "liver",
+    "6": "stomach",
+    "7": "pancreas",
+    "8": "gallbladder",
+    "9": "urinary bladder"
   },
-  "limitations": "4mm material voxels, no acquired HU or ultrasound. No complete liver/lung/vessels/muscle differentiation. No deformation.",
+  "limitations": "4mm material voxels, no acquired HU or ultrasound. No lung/vessels/muscle differentiation. No deformation. Display surfaces smoothed; skin reduced to 12mm clusters for picking.",
   "counts": {
     "0": 4792444,
-    "1": 2248,
-    "2": 2327,
+    "1": 2237,
+    "2": 2297,
     "3": 2263,
-    "6": 10602,
-    "10": 987240,
+    "5": 26003,
+    "6": 9989,
+    "7": 1613,
+    "8": 460,
+    "9": 1629,
+    "10": 958189,
     "11": 161688
   }
 }

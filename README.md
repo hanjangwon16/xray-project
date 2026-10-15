@@ -7,6 +7,8 @@ CT 단면 + 3D 해부 구조 + 각도별 가상 X-ray(DRR)를 연동한 **교육
 
 ## 기능
 
+- [전신 초음파 팬텀 확장·프로브 설정·실측 장기 자료와 검증](docs/ULTRASOUND_EXPANSION.ko.md)
+
 - **3단면 CT 뷰어**: Axial / Coronal / Sagittal, 슬라이더로 단면 이동
 - **3D 골격 표면**: Marching Cubes(HU>300) 위에 X-ray 빔 시각화
   - 노란 점 = X-ray 소스, 파란 와이어프레임 = 검출기, 주황 선 = 빔 경로

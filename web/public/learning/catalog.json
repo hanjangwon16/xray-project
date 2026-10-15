@@ -173,6 +173,714 @@
       "citation": "Gómez-Flores et al., BUS-BRA, Medical Physics 51, 3110–3123 (2024)",
       "license": "CC BY 4.0 metadata + bundled permission notice",
       "changes": "Original image and mask, no pixel modifications"
+    },
+    {
+      "id": "kidney-real-1",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-1.jpg",
+      "title": "신장 · Normal 원분류 · 1",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-2",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-2.jpg",
+      "title": "신장 · Normal 원분류 · 2",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-3",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-3.jpg",
+      "title": "신장 · Normal 원분류 · 3",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-4",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-4.jpg",
+      "title": "신장 · Normal 원분류 · 4",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-5",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-5.jpg",
+      "title": "신장 · Normal 원분류 · 5",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-6",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-6.jpg",
+      "title": "신장 · Normal 원분류 · 6",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-7",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-7.jpg",
+      "title": "신장 · Normal 원분류 · 7",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-8",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-8.jpg",
+      "title": "신장 · Normal 원분류 · 8",
+      "view": "Normal / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-9",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-9.jpg",
+      "title": "신장 · Stone 원분류 · 9",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-10",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-10.jpg",
+      "title": "신장 · Stone 원분류 · 10",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-11",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-11.jpg",
+      "title": "신장 · Stone 원분류 · 11",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-12",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-12.jpg",
+      "title": "신장 · Stone 원분류 · 12",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-13",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-13.jpg",
+      "title": "신장 · Stone 원분류 · 13",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-14",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-14.jpg",
+      "title": "신장 · Stone 원분류 · 14",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-15",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-15.jpg",
+      "title": "신장 · Stone 원분류 · 15",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "kidney-real-16",
+      "modality": "ultrasound",
+      "organIds": [
+        2,
+        3
+      ],
+      "image": "kidney-real-16.jpg",
+      "title": "신장 · Stone 원분류 · 16",
+      "view": "stone / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/h6jc4xm4py/1",
+      "citation": "Kaur & Singh (2024), Kidney Ultrasound Images Stone and No Stone, doi:10.17632/h6jc4xm4py.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG, no pixel modifications."
+    },
+    {
+      "id": "lus-real-1",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-1.jpg",
+      "title": "간·담낭 · FPH 표준면 · 1",
+      "view": "FPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-1-mask.png"
+    },
+    {
+      "id": "lus-real-2",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-2.jpg",
+      "title": "간·담낭 · FPH 표준면 · 2",
+      "view": "FPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-2-mask.png"
+    },
+    {
+      "id": "lus-real-3",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-3.jpg",
+      "title": "간·담낭 · FPH 표준면 · 3",
+      "view": "FPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-3-mask.png"
+    },
+    {
+      "id": "lus-real-4",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-4.jpg",
+      "title": "간·담낭 · FPH 표준면 · 4",
+      "view": "FPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-4-mask.png"
+    },
+    {
+      "id": "lus-real-5",
+      "modality": "ultrasound",
+      "organIds": [
+        5,
+        8
+      ],
+      "image": "lus-real-5.jpg",
+      "title": "간·담낭 · GBH 표준면 · 5",
+      "view": "GBH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-5-mask.png"
+    },
+    {
+      "id": "lus-real-6",
+      "modality": "ultrasound",
+      "organIds": [
+        5,
+        8
+      ],
+      "image": "lus-real-6.jpg",
+      "title": "간·담낭 · GBH 표준면 · 6",
+      "view": "GBH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-6-mask.png"
+    },
+    {
+      "id": "lus-real-7",
+      "modality": "ultrasound",
+      "organIds": [
+        5,
+        8
+      ],
+      "image": "lus-real-7.jpg",
+      "title": "간·담낭 · GBH 표준면 · 7",
+      "view": "GBH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-7-mask.png"
+    },
+    {
+      "id": "lus-real-8",
+      "modality": "ultrasound",
+      "organIds": [
+        5,
+        8
+      ],
+      "image": "lus-real-8.jpg",
+      "title": "간·담낭 · GBH 표준면 · 8",
+      "view": "GBH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-8-mask.png"
+    },
+    {
+      "id": "lus-real-9",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-9.jpg",
+      "title": "간·담낭 · LHA 표준면 · 9",
+      "view": "LHA / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-9-mask.png"
+    },
+    {
+      "id": "lus-real-10",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-10.jpg",
+      "title": "간·담낭 · LHA 표준면 · 10",
+      "view": "LHA / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-10-mask.png"
+    },
+    {
+      "id": "lus-real-11",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-11.jpg",
+      "title": "간·담낭 · LHA 표준면 · 11",
+      "view": "LHA / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-11-mask.png"
+    },
+    {
+      "id": "lus-real-12",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-12.jpg",
+      "title": "간·담낭 · LHA 표준면 · 12",
+      "view": "LHA / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-12-mask.png"
+    },
+    {
+      "id": "lus-real-13",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-13.jpg",
+      "title": "간·담낭 · LHP 표준면 · 13",
+      "view": "LHP / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-13-mask.png"
+    },
+    {
+      "id": "lus-real-14",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-14.jpg",
+      "title": "간·담낭 · LHP 표준면 · 14",
+      "view": "LHP / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-14-mask.png"
+    },
+    {
+      "id": "lus-real-15",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-15.jpg",
+      "title": "간·담낭 · LHP 표준면 · 15",
+      "view": "LHP / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-15-mask.png"
+    },
+    {
+      "id": "lus-real-16",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-16.jpg",
+      "title": "간·담낭 · LHP 표준면 · 16",
+      "view": "LHP / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-16-mask.png"
+    },
+    {
+      "id": "lus-real-17",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-17.jpg",
+      "title": "간·담낭 · LHV 표준면 · 17",
+      "view": "LHV / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-17-mask.png"
+    },
+    {
+      "id": "lus-real-18",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-18.jpg",
+      "title": "간·담낭 · LHV 표준면 · 18",
+      "view": "LHV / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-18-mask.png"
+    },
+    {
+      "id": "lus-real-19",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-19.jpg",
+      "title": "간·담낭 · LHV 표준면 · 19",
+      "view": "LHV / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-19-mask.png"
+    },
+    {
+      "id": "lus-real-20",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-20.jpg",
+      "title": "간·담낭 · LHV 표준면 · 20",
+      "view": "LHV / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-20-mask.png"
+    },
+    {
+      "id": "lus-real-21",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-21.jpg",
+      "title": "간·담낭 · RH 표준면 · 21",
+      "view": "RH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-21-mask.png"
+    },
+    {
+      "id": "lus-real-22",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-22.jpg",
+      "title": "간·담낭 · RH 표준면 · 22",
+      "view": "RH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-22-mask.png"
+    },
+    {
+      "id": "lus-real-23",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-23.jpg",
+      "title": "간·담낭 · RH 표준면 · 23",
+      "view": "RH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-23-mask.png"
+    },
+    {
+      "id": "lus-real-24",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-24.jpg",
+      "title": "간·담낭 · RH 표준면 · 24",
+      "view": "RH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-24-mask.png"
+    },
+    {
+      "id": "lus-real-25",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-25.jpg",
+      "title": "간·담낭 · SPH 표준면 · 25",
+      "view": "SPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-25-mask.png"
+    },
+    {
+      "id": "lus-real-26",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-26.jpg",
+      "title": "간·담낭 · SPH 표준면 · 26",
+      "view": "SPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-26-mask.png"
+    },
+    {
+      "id": "lus-real-27",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-27.jpg",
+      "title": "간·담낭 · SPH 표준면 · 27",
+      "view": "SPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-27-mask.png"
+    },
+    {
+      "id": "lus-real-28",
+      "modality": "ultrasound",
+      "organIds": [
+        5
+      ],
+      "image": "lus-real-28.jpg",
+      "title": "간·담낭 · SPH 표준면 · 28",
+      "view": "SPH / 실제 2D 촬영",
+      "note": "전신 팬텀과 다른 사람의 정지 영상입니다. 좌우·입사각·주파수 메타데이터로 정합되지 않았습니다. 원자료 분류이며 개별 임상 검수 전 표본입니다.",
+      "source": "https://data.mendeley.com/datasets/cwc37g672d/1",
+      "citation": "Chen & Zhou (2026), LUS-7Seg, doi:10.17632/cwc37g672d.1",
+      "license": "CC BY 4.0 · https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Original JPEG pixels unchanged; organ mask rasterized from source annotation polygons.",
+      "mask": "lus-real-28-mask.png"
     }
   ],
   "reviewStatus": "Dataset labels; not individually clinically validated"

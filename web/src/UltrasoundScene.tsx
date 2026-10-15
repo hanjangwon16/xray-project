@@ -12,15 +12,15 @@ import {add,probeGeometry,rayPoint,type ProbeSettings,type UsVolume,type Vec3} f
 
 type Manipulation='slide'|'rotate'|'tilt'|'rock'|'camera';
 const MODES:[Manipulation,string][]=[['slide','밀기'],['rotate','회전'],['tilt','앞뒤 기울임'],['rock','좌우 기울임'],['camera','화면 회전']];
-export default function UltrasoundScene({volume,settings,onChange,frozen}: {
-  volume:UsVolume;settings:ProbeSettings;onChange:(patch:Partial<ProbeSettings>)=>void;frozen:boolean;
+export default function UltrasoundScene({volume,settings,onChange,frozen,focusRequest=0}: {
+  volume:UsVolume;settings:ProbeSettings;onChange:(patch:Partial<ProbeSettings>)=>void;frozen:boolean;focusRequest?:number;
 }) {
   const host=useRef<HTMLDivElement>(null),update=useRef<(s:ProbeSettings)=>void>(()=>{});
   const reset=useRef<()=>void>(()=>{}),callback=useRef(onChange);callback.current=onChange;
   const [mode,setMode]=useState<Manipulation>('slide');
   const interaction=useRef({mode,settings,frozen});interaction.current={mode,settings,frozen};
   const focus=useRef<()=>void>(()=>{}),skinOpacity=useRef<(inside:boolean)=>void>(()=>{});
-  const [inside,setInside]=useState(false);
+  const [inside,setInside]=useState(volume.kind==='anatomy');
   useEffect(()=>{
     const element=host.current!;
     const owned:{delete:()=>void}[]=[];
@@ -43,7 +43,9 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
       const actor=own(vtkActor.newInstance());actor.setMapper(mapper);actor.getProperty().setColor(...color);actor.getProperty().setOpacity(opacity);actor.getProperty().setAmbient(.22);actor.getProperty().setDiffuse(.75);actor.getProperty().setSpecular(.2);actor.getProperty().setSpecularPower(24);actor.getProperty().setInterpolationToPhong();renderer.addActor(actor);return actor;
     };
     let skin:ReturnType<typeof vtkActor.newInstance>;
-    if(volume.skinPoints) {
+    if(volume.kind==='anatomy'&&volume.surfaces) {
+      skin=preparedSurface(0,[.72,.58,.47],.13);
+    } else if(volume.skinPoints) {
       const poly=own(vtkPolyData.newInstance());poly.getPoints().setData(volume.skinPoints,3);
       const faces=new Uint32Array(volume.skinPoints.length/9*4);
       for(let i=0;i<faces.length/4;i++)faces.set([3,i*3,i*3+1,i*3+2],i*4);
@@ -55,10 +57,10 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
     } else skin=surface(image,volume.kind==='human'?-300:50,[.66,.76,.8],volume.kind==='human'?.13:.5);
     const internal:ReturnType<typeof vtkActor.newInstance>[]=[];
     if(volume.kind!=='phantom') {
-      if(volume.kind!=='acquired')internal.push(surface(image,350,[.89,.86,.75],.9));
-      const structures:[number,Vec3][]=volume.kind==='acquired'?[[1,[.94,.46,.38]],[2,[.3,.85,.82]],[3,[.68,.5,.95]]]:[[5,[.78,.35,.32]],[2,[1,.64,.35]],[3,[1,.78,.4]],[1,[.65,.45,.85]],[6,[.84,.65,.43]]];
+      if(volume.kind!=='acquired')internal.push(volume.surfaces?preparedSurface(11,[.89,.86,.75],.9):surface(image,350,[.89,.86,.75],.9));
+      const structures:[number,Vec3][]=volume.kind==='acquired'?[[1,[.94,.46,.38]],[2,[.3,.85,.82]],[3,[.68,.5,.95]]]:[[5,[.78,.35,.32]],[2,[1,.64,.35]],[3,[1,.78,.4]],[1,[.65,.45,.85]],[6,[.84,.65,.43]],...(volume.kind==='anatomy'?[[7,[.9,.7,.45]],[8,[.4,.8,.4]],[9,[.5,.65,.95]]] as [number,Vec3][]:[])];
       if(volume.labels)for(const [id,color] of structures) {
-        if(volume.kind==='acquired'){internal.push(preparedSurface(id,color,1));continue;}
+        if(volume.surfaces){internal.push(preparedSurface(id,color,1));continue;}
         const mask=own(vtkImageData.newInstance({origin:volume.origin,spacing:volume.spacing}));mask.setDimensions(volume.dims);
         mask.getPointData().setScalars(own(vtkDataArray.newInstance({values:Uint8Array.from(volume.labels,x=>x===id?1:0),numberOfComponents:1})));
         internal.push(surface(mask,.5,color,.8));
@@ -86,17 +88,17 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
     skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='acquired'?(value?.008:.035):volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
     update.current=s=>{
       const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);probe.actor.setVisibility(g.contact||!!s.lifted);edges.actor.setVisibility(g.contact);marker.actor.setVisibility(g.contact||!!s.lifted);
-      const pts:Vec3[]=s.probe==='linear'?[rayPoint(g,s,0,0),rayPoint(g,s,1,0),rayPoint(g,s,1,s.depth),rayPoint(g,s,0,s.depth)]:[g.origin,...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
+      const pts:Vec3[]=[...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,0)),...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
       const triangles:number[]=[];
-      if(s.probe==='linear')triangles.push(3,0,1,2,3,0,2,3);else for(let i=1;i<41;i++)triangles.push(3,0,i,i+1);
+      for(let i=0;i<40;i++)triangles.push(3,i,i+1,i+42,3,i,i+42,i+41);
       setMesh(fan.poly,pts,triangles);
       edges.poly.getPoints().setData(new Float32Array(pts.flat()),3);
-      const boundary=s.probe==='linear'?[0,1,2,3,0]:[0,...Array.from({length:41},(_,i)=>i+1),0];
+      const boundary=[...Array.from({length:41},(_,i)=>i),...Array.from({length:41},(_,i)=>81-i),0];
       edges.poly.getLines().setData(new Uint32Array([boundary.length,...boundary]));edges.poly.modified();
       const glyphScale=volume.kind==='acquired'?.2:1;
       const box=(offset:number,width:number,thickness:number,length:number):Vec3[]=>[-1,1].flatMap(d=>[-1,1].flatMap(n=>[-1,1].map(a=>add(add(add(g.origin,g.inward,(offset+d*length)*glyphScale),g.normal,n*thickness*glyphScale),g.across,a*width*glyphScale))));
       const faces=[3,0,1,3,3,0,3,2,3,4,6,7,3,4,7,5,3,0,4,5,3,0,5,1,3,2,3,7,3,2,7,6,3,0,2,6,3,0,6,4,3,1,5,7,3,1,7,3];
-      setMesh(probe.poly,box(-14,s.probe==='linear'?27:17,6,13),faces);
+      setMesh(probe.poly,box(-14,(s.width??50)/2,6,13),faces);
       setMesh(marker.poly,box(-27,3,6.5,1).map(p=>add(p,g.across,-13*glyphScale)),faces);draw();
     };
     const pick=(x:number,y:number)=>{
@@ -157,6 +159,8 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
     };
   },[volume]);
   useEffect(()=>update.current(settings),[volume,settings]);
+  useEffect(()=>setInside(volume.kind==='anatomy'),[volume]);
+  useEffect(()=>{if(focusRequest)focus.current();},[focusRequest]);
   useEffect(()=>skinOpacity.current(inside),[volume,inside]);
   return <div className="us-scene">
     <div className="us-scene-viewport">

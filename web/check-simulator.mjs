@@ -22,7 +22,7 @@ try {
   await scene.click({position:{x:bounds.width*.5,y:bounds.height*.42}});await ready();
   assert.notEqual(await page.getByRole('slider',{name:'상하 위치',exact:true}).inputValue(),oldHeight);
   await page.getByRole('button',{name:'오른쪽 신장',exact:true}).click();await ready();
-  await page.getByRole('button',{name:'내부 장기 보기',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'피부 보기',exact:true}).isVisible(),true);
   await page.getByRole('button',{name:'탐촉자 확대',exact:true}).click();
   await page.screenshot({path:'/tmp/xray-simulator-internal.png'});
   await page.getByRole('slider',{name:'탐촉자 회전',exact:true}).fill('90');await pose('anatomy',90);assert.notEqual(await pixels(),body);
