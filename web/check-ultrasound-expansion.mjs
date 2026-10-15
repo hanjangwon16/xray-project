@@ -11,7 +11,7 @@ page.on('pageerror',e=>errors.push(e.message));
 const canvas=page.locator('canvas[aria-label="초음파 단면 영상"]');
 const ready=()=>page.waitForFunction(()=>document.querySelector('canvas[aria-label="초음파 단면 영상"]')?.dataset.ready==='true'&&document.querySelector('.us-image-area')?.getAttribute('aria-busy')==='false',null,{timeout:90000});
 const pixels=()=>canvas.evaluate(c=>c.toDataURL());
-const setting=async(name,value)=>{await page.getByRole('slider',{name,exact:true}).fill(String(value));await page.waitForFunction(({key,value})=>{const c=document.querySelector('canvas[aria-label="초음파 단면 영상"]');return JSON.parse(c?.dataset.pose||'{}')[key]===value&&document.querySelector('.us-image-area')?.getAttribute('aria-busy')==='false';},{key:({'좌우 위치':'lateral','프로브 폭':'width','시야각':'sectorAngle','주파수':'frequency','젤 스탠드오프 거리':'standoff'})[name],value});};
+const setting=async(name,value)=>{await page.getByRole('tab',{name:name==='좌우 위치'?'위치':'영상',exact:true}).click();await page.getByRole('slider',{name,exact:true}).fill(String(value));await page.waitForFunction(({key,value})=>{const c=document.querySelector('canvas[aria-label="초음파 단면 영상"]');return JSON.parse(c?.dataset.pose||'{}')[key]===value&&document.querySelector('.us-image-area')?.getAttribute('aria-busy')==='false';},{key:({'좌우 위치':'lateral','프로브 폭':'width','시야각':'sectorAngle','주파수':'frequency','젤 스탠드오프 거리':'standoff'})[name],value});};
 try{
   await page.goto(process.env.TEST_URL||'http://127.0.0.1:4194');
   await page.getByRole('button',{name:'초음파 촬영 연습',exact:true}).click();await ready();
@@ -22,13 +22,29 @@ try{
     assert.ok(Number(await canvas.getAttribute('data-coverage'))>.1,organ+' scan coverage');
   }
   await page.getByRole('button',{name:'간',exact:true}).click();await ready();
+  const unchanged=await pixels();
+  await page.getByRole('tab',{name:'위치',exact:true}).focus();await page.keyboard.press('End');
+  assert.equal(await page.getByRole('tab',{name:'영상',exact:true}).getAttribute('aria-selected'),'true');
+  assert.equal(await page.getByRole('tabpanel').count(),1);assert.equal(await pixels(),unchanged);
+  await page.keyboard.press('Home');
+  assert.equal(await page.getByRole('tab',{name:'위치',exact:true}).getAttribute('aria-selected'),'true');
   await page.screenshot({path:'/tmp/xray-expanded-liver.png'});
   const before=await pixels(),old=Number(await page.getByRole('slider',{name:'좌우 위치',exact:true}).inputValue());
   await setting('좌우 위치',Math.round((old+2)*2)/2);assert.notEqual(await pixels(),before);
+  assert.equal(await page.getByRole('button',{name:'간',exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await page.getByRole('button',{name:'실제 간 참고 영상 ↗',exact:true}).isVisible(),true);
+  const scene=page.locator('.us-scene-canvas'),context=await scene.screenshot(),signal=await pixels();
+  await page.getByRole('checkbox',{name:'선택 장기 강조',exact:true}).check();
+  assert.notDeepEqual(await scene.screenshot(),context);assert.equal(await pixels(),signal,'3D emphasis must preserve B-mode signal');
+  await page.getByRole('checkbox',{name:'구조 해설색',exact:true}).check();
+  await page.screenshot({path:'/tmp/xray-feedback-highlight.png'});
+  await page.getByRole('checkbox',{name:'구조 해설색',exact:true}).uncheck();
+  assert.equal(await pixels(),signal,'Disabling explanation colors must restore source signal');
   const moved=await pixels();await setting('프로브 폭',25);assert.notEqual(await pixels(),moved);
   const narrow=await pixels();await setting('시야각',45);assert.notEqual(await pixels(),narrow);
   const low=await pixels();await setting('주파수',12);assert.notEqual(await pixels(),low);
   const touching=await pixels();await setting('젤 스탠드오프 거리',20);assert.notEqual(await pixels(),touching);
+  await page.getByRole('tab',{name:'위치',exact:true}).click();
   await page.getByRole('button',{name:'간',exact:true}).click();await ready();
   await page.getByRole('button',{name:'실제 간 참고 영상 ↗',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.library-image img')?.naturalWidth>0);

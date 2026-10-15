@@ -8,7 +8,7 @@ const ready=()=>page.waitForFunction(()=>document.querySelector('canvas[data-sou
 try {
   await page.goto(process.env.TEST_URL||'http://127.0.0.1:4192');
   await page.getByRole('button',{name:'초음파 촬영 연습',exact:true}).click();await ready();
-  assert.equal(await page.getByRole('slider',{name:'주파수',exact:true}).count(),0);
+  assert.equal(await page.getByRole('slider',{name:'주파수',exact:true,includeHidden:true}).count(),0);
   assert.ok(Number(await image.getAttribute('data-coverage'))>.5);
   const original=await image.evaluate(c=>c.toDataURL());
   await page.screenshot({path:'/tmp/xray-acquired-thyroid.png'});
@@ -19,9 +19,11 @@ try {
   await page.getByRole('slider',{name:'상하 위치',exact:true}).fill('40');await ready();
   await page.waitForFunction(s=>document.querySelector('canvas[data-source="acquired"]').toDataURL()!==s,original);
   await page.getByRole('button',{name:'갑상선 중심으로 복귀',exact:true}).click();await ready();
+  await page.getByRole('tab',{name:'방향',exact:true}).click();
   await page.getByRole('slider',{name:'탐촉자 회전',exact:true}).fill('45');await ready();
   await page.waitForFunction(s=>document.querySelector('canvas[data-source="acquired"]').toDataURL()!==s,original);
   await page.getByRole('button',{name:'영상 정지',exact:true}).click();
+  await page.getByRole('tab',{name:'위치',exact:true}).click();
   assert.equal(await page.getByRole('slider',{name:'상하 위치',exact:true}).isDisabled(),true);
   await page.getByRole('button',{name:'재생',exact:true}).click();
   await page.getByRole('button',{name:'갑상선 중심으로 복귀',exact:true}).click();await ready();

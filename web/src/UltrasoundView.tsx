@@ -2,9 +2,9 @@ import {useEffect,useRef,useState} from 'react';
 import {loadCase} from './volume';
 import {DEFAULT_PROBE,probeGeometry,imagePoint,voxelPoint,type ProbeSettings,type UsVolume,type UsFrame,type Vec3} from './ultrasound';
 import UltrasoundScene from './UltrasoundScene';
-import {labelColor,labelName} from './labels';
+import {labelName} from './labels';
+import {ORGAN_NAMES,ultrasoundColor} from './ultrasoundLabels';
 
-const ORGAN_NAMES:Record<number,string>={1:'비장',2:'오른쪽 신장',3:'왼쪽 신장',5:'간',6:'위',7:'췌장',8:'담낭',9:'방광'};
 function readSurfaces(data:ArrayBuffer,entries:{id:number;vertices:number;triangles:number;offset:number;bytes:number}[]) {
   return entries.map(entry=>{
     if(entry.offset<0||entry.offset%4!==0||entry.bytes!==entry.vertices*24+entry.triangles*16||entry.offset+entry.bytes>data.byteLength)throw Error('3D 표면 데이터 크기가 일치하지 않습니다.');
@@ -23,12 +23,13 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
   const [frame,setFrame]=useState<(UsFrame & {settings:ProbeSettings})|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(true);
   const [reference,setReference]=useState(false);
   const [focusRequest,setFocusRequest]=useState(0);
+  const [control,setControl]=useState('position'),[selectedOrgan,setSelectedOrgan]=useState(initialOrgan),[highlight,setHighlight]=useState(false);
   const [frozen,setFrozen]=useState(false),[overlay,setOverlay]=useState(false),[hover,setHover]=useState(''),[target,setTarget]=useState('간');
   const worker=useRef<Worker|null>(null),request=useRef(0),canvas=useRef<HTMLCanvasElement>(null);
   const submit=useRef<(pose:ProbeSettings)=>void>(()=>{});
   useEffect(()=>{
     const abort=new AbortController();let disposed=false;
-    setVolume(null);setFrame(null);setError('');setBusy(true);setFrozen(false);setHover('');setReference(false);
+    setVolume(null);setFrame(null);setError('');setBusy(true);setFrozen(false);setHover('');setReference(false);setControl('position');setHighlight(false);setSelectedOrgan(source==='acquired'?1:initialOrgan);
     (async()=>{
       let v:UsVolume;
       if(source==='human') {
@@ -97,7 +98,7 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
     const c=canvas.current;c.width=frame.width;c.height=frame.height;
     const ctx=c.getContext('2d')!,img=ctx.createImageData(c.width,c.height);
     for(let i=0;i<frame.pixels.length;i++) {
-      const g=reference&&frame.reference?frame.reference[i]:frame.pixels[i],color=overlay&&g>10&&frame.labels[i]&&!(volume?.kind==='anatomy'&&frame.labels[i]===10)?(volume?.kind==='acquired'?({1:[240,117,97],2:[77,217,209],3:[173,128,242]}[frame.labels[i]]??null):volume?.kind==='anatomy'&&frame.labels[i]===11?[225,215,190]:labelColor(frame.labels[i])):null;
+      const g=reference&&frame.reference?frame.reference[i]:frame.pixels[i],color=overlay&&g>10&&volume?ultrasoundColor(volume.kind,frame.labels[i]):null;
       img.data[i*4]=color?g*.6+color[0]*.4:g;img.data[i*4+1]=color?g*.6+color[1]*.4:g;img.data[i*4+2]=color?g*.6+color[2]*.4:g;img.data[i*4+3]=255;
     }
     ctx.putImageData(img,0,0);
@@ -109,7 +110,7 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
     if(patch.lateral!==undefined||patch.height!==undefined){if(!patch.contact)patch={...patch,contact:undefined,lifted:false};setTarget('자유 스캔');}
     setSettings(s=>({...s,...patch}));setHover('');
   }};
-  const reset=()=>{setFrozen(false);setSettings({...DEFAULT_PROBE,...(volume?.kind==='acquired'?{...organPosition(volume,1),depth:55,probe:'linear',frequency:12}:volume&&volume.kind!=='phantom'?organPosition(volume,initialOrgan):{depth:50,height:50})});setTarget(volume?.kind==='acquired'?'갑상선 · 왼쪽 엽':volume&&volume.kind!=='phantom'?ORGAN_NAMES[initialOrgan]:'시험 팬텀');};
+  const reset=()=>{setFrozen(false);setSelectedOrgan(volume?.kind==='acquired'?1:initialOrgan);setSettings({...DEFAULT_PROBE,...(volume?.kind==='acquired'?{...organPosition(volume,1),depth:55,probe:'linear',frequency:12}:volume&&volume.kind!=='phantom'?organPosition(volume,initialOrgan):{depth:50,height:50})});setTarget(volume?.kind==='acquired'?'갑상선 · 왼쪽 엽':volume&&volume.kind!=='phantom'?ORGAN_NAMES[initialOrgan]:'시험 팬텀');};
   const slider=(key:keyof Omit<ProbeSettings,'contact'|'lifted'>,title:string,min:number,max:number,step:number,unit:string)=>
     <label className="us-slider" key={key}><span>{title}<output>{Number(settings[key]).toFixed(step<1?1:0)}{unit}</output></span><input aria-label={title} type="range" min={min} max={max} step={step} value={settings[key]} disabled={frozen||!volume} onChange={e=>change({[key]:+e.target.value})}/></label>;
   const geometry=volume?probeGeometry(volume,settings):null;
@@ -120,19 +121,20 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
   };
   return <section className="us-workspace" aria-label="초음파 촬영 시뮬레이터">
     <aside className="us-tools">
-      <div className="us-eyebrow">ULTRASOUND LAB</div><h2>탐촉자에서<br/>단면까지.</h2><p className="us-muted">위치와 방향을 바꾸며 인체와 영상의 관계를 익힙니다.</p>
+      <div className="us-eyebrow">ULTRASOUND LAB</div><h2>인체 → 탐촉자 → 단면</h2>
       <div className="us-source-tabs us-datasets"><button disabled={frozen} className={source==='acquired'?'active':''} onClick={()=>changeSource('acquired')}>실제 인체 3D 초음파 · 갑상선</button><button disabled={frozen} className={source==='phantom'?'active':''} onClick={()=>changeSource('phantom')}>실측 시험 팬텀</button><button disabled={frozen} className={source==='anatomy'?'active':''} onClick={()=>changeSource('anatomy')}>전신 인체 팬텀</button><button disabled={frozen} className={source==='human'?'active':''} onClick={()=>changeSource('human')}>실제 복부 CT 기반</button></div>
       {source==='acquired'&&<p className="us-muted">SegThy · 실제 측정 B-mode와 같은 사례의 수동 분할. 왼쪽 목의 촬영 범위만 제공합니다. 전신 아틀라스와 정합되지 않았습니다.</p>}
       {source==='anatomy'&&<p className="us-muted">전신 피부와 8개 장기 · 4mm 재료 근사. 장기를 선택하면 해당 부위를 확대합니다. B-mode는 실측이 아닌 합성 영상입니다.</p>}
-      <div className="us-control-section"><h3>01 <span>탐색 위치</span></h3>
+      <div className="us-control-tabs" role="tablist" aria-label="초음파 조작 설정" onKeyDown={e=>{const ids=['position','direction','image'],index=ids.indexOf(control),next=e.key==='ArrowRight'?(index+1)%3:e.key==='ArrowLeft'?(index+2)%3:e.key==='Home'?0:e.key==='End'?2:-1;if(next>=0){e.preventDefault();setControl(ids[next]);document.getElementById('us-tab-'+ids[next])?.focus();}}}>{[['position','위치'],['direction','방향'],['image','영상']].map(([id,name])=><button key={id} id={'us-tab-'+id} role="tab" tabIndex={control===id?0:-1} aria-selected={control===id} aria-controls={'us-controls-'+id} onClick={()=>setControl(id)}>{name}</button>)}</div>
+      <div className="us-control-section" role="tabpanel" id="us-controls-position" aria-labelledby="us-tab-position" hidden={control!=='position'}><h3>01 <span>탐색 위치</span></h3>
       {source==='acquired'&&<button disabled={frozen||!volume} onClick={reset}>갑상선 중심으로 복귀</button>}
-      {!measured&&<div className="us-organ-presets">{(source==='anatomy'?[5,8,7,2,3,1,6,9]:[5,2,3,1]).map(id=><button disabled={frozen||!volume} className={target===ORGAN_NAMES[id]?'active':''} key={id} onClick={()=>{const p=volume&&organPosition(volume,id);if(p){change({...p,rotation:0,tilt:0,rock:0});setTarget(ORGAN_NAMES[id]);setFocusRequest(n=>n+1);}}}>{ORGAN_NAMES[id]}</button>)}</div>}
+      {!measured&&<div className="us-organ-presets">{(source==='anatomy'?[5,8,7,2,3,1,6,9]:[5,2,3,1]).map(id=><button disabled={frozen||!volume} aria-pressed={selectedOrgan===id} className={selectedOrgan===id?'active':''} key={id} onClick={()=>{const p=volume&&organPosition(volume,id);if(p){change({...p,rotation:0,tilt:0,rock:0});setSelectedOrgan(id);setTarget(ORGAN_NAMES[id]);setFocusRequest(n=>n+1);}}}><i style={{background:`rgb(${ultrasoundColor(source,id)?.join(',')})`}}/>{ORGAN_NAMES[id]}</button>)}</div>}
       {slider('lateral','좌우 위치',0,100,.5,'%')}{slider('height','상하 위치',0,100,.5,'%')}
-      {!measured&&[2,3,5,8].map(id=>target===ORGAN_NAMES[id]&&<button key={id} onClick={()=>onOpenReference(id,source==='anatomy'?'anatomy':'human')}>실제 {ORGAN_NAMES[id]} 참고 영상 ↗</button>)}
-      </div><div className="us-control-section"><h3>02 <span>탐촉자 방향</span></h3>
+      {!measured&&[2,3,5,8].map(id=>selectedOrgan===id&&<button key={id} onClick={()=>onOpenReference(id,source==='anatomy'?'anatomy':'human')}>실제 {ORGAN_NAMES[id]} 참고 영상 ↗</button>)}
+      </div><div className="us-control-section" role="tabpanel" id="us-controls-direction" aria-labelledby="us-tab-direction" hidden={control!=='direction'}><h3>02 <span>탐촉자 방향</span></h3>
       <div className="us-source-tabs"><button disabled={frozen||!volume} className={settings.rotation===0?'active':''} onClick={()=>change({rotation:0,tilt:0,rock:0})}>가로 스캔</button><button disabled={frozen||!volume} className={settings.rotation===90?'active':''} onClick={()=>change({rotation:90,tilt:0,rock:0})}>세로 스캔</button></div>
       {slider('rotation','탐촉자 회전',-180,180,1,'°')}{slider('tilt','앞뒤 기울임',-35,35,1,'°')}{slider('rock','좌우 기울임',-35,35,1,'°')}
-      </div><div className="us-control-section"><h3>03 <span>영상 설정</span></h3>
+      </div><div className="us-control-section" role="tabpanel" id="us-controls-image" aria-labelledby="us-tab-image" hidden={control!=='image'}><h3>03 <span>영상 설정</span></h3>
       <label className="us-probe-select">{measured?'재단면 표시 형태':'탐촉자'}<select aria-label="탐촉자 종류" value={settings.probe} disabled={frozen||!volume} onChange={e=>change({probe:e.target.value as ProbeSettings['probe'],depth:source==='acquired'?55:source==='phantom'?(e.target.value==='linear'?40:50):(e.target.value==='linear'?70:180)})}><option value="curved">곡면형</option><option value="linear">선형</option></select></label>
       {slider('width',measured?'표시 폭':'프로브 폭',15,70,1,'mm')}{settings.probe==='curved'&&slider('sectorAngle','시야각',30,100,1,'°')}
       {slider('standoff',measured?'표시 시작 거리':'젤 스탠드오프 거리',0,30,1,'mm')}
@@ -144,7 +146,8 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
       <div className="us-session-heading"><div><span className="us-eyebrow">{source==='anatomy'?'EXPERIMENTAL · ANATOMICAL PHANTOM':source==='human'?'EXPERIMENTAL · CT → ACOUSTIC APPROXIMATION':'MEASURED 3D ULTRASOUND'}</span><h2>{source==='acquired'?'실제 갑상선 영상과 장기 형태를 함께 보세요':source==='anatomy'?'인체 조작 실험 · 합성 영상':source==='human'?'복부 CT 음향 근사 · 실험용':'실측 초음파 볼륨 탐색'}</h2></div><span role="status" className={'us-live '+(frozen||!geometry?.contact?'paused':'')}>{frozen?'Ⅱ 정지':geometry?.contact?(measured?'실측 · 재단면':'● 접촉 · LIVE'):'접촉 해제'}</span></div>
       <div className="us-viewports">
         <article className="us-panel"><div className="us-panel-heading"><span>01 / {source==='acquired'?'같은 사례 · 갑상선 분할':source==='anatomy'?'실제 인체 형상':source==='human'?'실제 CT 기반 인체':'시험용 초음파 팬텀'}</span><span>3D + SCAN PLANE</span></div>
-          {volume?<UltrasoundScene volume={volume} settings={settings} onChange={change} frozen={frozen} focusRequest={focusRequest}/>:<div className="us-loading" role="status">{error?'데이터를 불러오지 못했습니다.':'3D 구조와 영상을 준비하고 있습니다…'}</div>}
+          {volume?<UltrasoundScene volume={volume} settings={settings} onChange={change} frozen={frozen} focusRequest={focusRequest} highlightedOrgan={highlight?selectedOrgan:undefined}/>:<div className="us-loading" role="status">{error?'데이터를 불러오지 못했습니다.':'3D 구조와 영상을 준비하고 있습니다…'}</div>}
+          {source!=='phantom'&&<div className="us-target"><span><i style={{background:`rgb(${ultrasoundColor(source,selectedOrgan)?.join(',')})`}}/>학습 대상 · {source==='acquired'?'갑상선':ORGAN_NAMES[selectedOrgan]}</span><label><input type="checkbox" checked={highlight} onChange={e=>setHighlight(e.target.checked)}/>선택 장기 강조</label></div>}
           <div className="us-key"><span><i style={{background:'#6fe0cb'}}/>스캔면</span>{source==='acquired'&&<><span><i style={{background:'#f07561'}}/>갑상선</span><span><i style={{background:'#4dd9d1'}}/>혈관 #2</span><span><i style={{background:'#ad80f2'}}/>혈관 #3</span></>}<span><i style={{background:'#fbc842'}}/>{source==='acquired'?'단면 조작점':'탐촉자 marker'} = 영상 왼쪽</span></div>
         </article>
         <article className="us-panel"><div className="us-panel-heading"><span>02 / {reference?'동일면 CT':'B-MODE'}</span><span>{measured?'실측 볼륨 · 재단면':(reference?'실제 CT · 사위 재단면':'합성 · 교육용 근사')}</span></div>

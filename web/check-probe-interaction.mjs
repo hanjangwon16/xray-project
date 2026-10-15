@@ -15,6 +15,7 @@ try {
   await page.getByRole('button',{name:'전신 인체 팬텀',exact:true}).click();await ready();
   const r=await scene.boundingBox(),x=r.x+r.width*.5,y=r.y+r.height*.42;
   await page.mouse.move(x,y);await page.mouse.down();await ready();
+  await page.waitForFunction(()=>!!JSON.parse(document.querySelector('canvas[data-source="anatomy"]').dataset.pose).contact);
   await image.evaluate(c=>{
     globalThis.probeFrames=[];
     globalThis.probeObserver=new MutationObserver(()=>globalThis.probeFrames.push(c.dataset.pose));

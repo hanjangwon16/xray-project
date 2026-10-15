@@ -9,11 +9,12 @@ import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkPolyData from '@kitware/vtk.js/Common/DataModel/PolyData';
 import vtkCellPicker from '@kitware/vtk.js/Rendering/Core/CellPicker';
 import {add,probeGeometry,rayPoint,type ProbeSettings,type UsVolume,type Vec3} from './ultrasound';
+import {ultrasoundColor} from './ultrasoundLabels';
 
 type Manipulation='slide'|'rotate'|'tilt'|'rock'|'camera';
 const MODES:[Manipulation,string][]=[['slide','밀기'],['rotate','회전'],['tilt','앞뒤 기울임'],['rock','좌우 기울임'],['camera','화면 회전']];
-export default function UltrasoundScene({volume,settings,onChange,frozen,focusRequest=0}: {
-  volume:UsVolume;settings:ProbeSettings;onChange:(patch:Partial<ProbeSettings>)=>void;frozen:boolean;focusRequest?:number;
+export default function UltrasoundScene({volume,settings,onChange,frozen,focusRequest=0,highlightedOrgan}: {
+  volume:UsVolume;settings:ProbeSettings;onChange:(patch:Partial<ProbeSettings>)=>void;frozen:boolean;focusRequest?:number;highlightedOrgan?:number;
 }) {
   const host=useRef<HTMLDivElement>(null),update=useRef<(s:ProbeSettings)=>void>(()=>{});
   const reset=useRef<()=>void>(()=>{}),callback=useRef(onChange);callback.current=onChange;
@@ -21,6 +22,7 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
   const interaction=useRef({mode,settings,frozen});interaction.current={mode,settings,frozen};
   const focus=useRef<()=>void>(()=>{}),skinOpacity=useRef<(inside:boolean)=>void>(()=>{});
   const [inside,setInside]=useState(volume.kind==='anatomy');
+  const emphasize=useRef<(id?:number)=>void>(()=>{});
   useEffect(()=>{
     const element=host.current!;
     const owned:{delete:()=>void}[]=[];
@@ -56,14 +58,16 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
       skin=preparedSurface(0,[.66,.76,.8],.035);
     } else skin=surface(image,volume.kind==='human'?-300:50,[.66,.76,.8],volume.kind==='human'?.13:.5);
     const internal:ReturnType<typeof vtkActor.newInstance>[]=[];
+    const organActors=new Map<number,ReturnType<typeof vtkActor.newInstance>>();
     if(volume.kind!=='phantom') {
       if(volume.kind!=='acquired')internal.push(volume.surfaces?preparedSurface(11,[.89,.86,.75],.9):surface(image,350,[.89,.86,.75],.9));
-      const structures:[number,Vec3][]=volume.kind==='acquired'?[[1,[.94,.46,.38]],[2,[.3,.85,.82]],[3,[.68,.5,.95]]]:[[5,[.78,.35,.32]],[2,[1,.64,.35]],[3,[1,.78,.4]],[1,[.65,.45,.85]],[6,[.84,.65,.43]],...(volume.kind==='anatomy'?[[7,[.9,.7,.45]],[8,[.4,.8,.4]],[9,[.5,.65,.95]]] as [number,Vec3][]:[])];
-      if(volume.labels)for(const [id,color] of structures) {
-        if(volume.surfaces){internal.push(preparedSurface(id,color,1));continue;}
+      const structures=volume.kind==='acquired'?[1,2,3]:volume.kind==='anatomy'?[5,2,3,1,6,7,8,9]:[5,2,3,1,6];
+      if(volume.labels)for(const id of structures) {
+        const color=ultrasoundColor(volume.kind,id)!.map(c=>c/255) as Vec3;
+        if(volume.surfaces){const actor=preparedSurface(id,color,1);internal.push(actor);organActors.set(id,actor);continue;}
         const mask=own(vtkImageData.newInstance({origin:volume.origin,spacing:volume.spacing}));mask.setDimensions(volume.dims);
         mask.getPointData().setScalars(own(vtkDataArray.newInstance({values:Uint8Array.from(volume.labels,x=>x===id?1:0),numberOfComponents:1})));
-        internal.push(surface(mask,.5,color,.8));
+        const actor=surface(mask,.5,color,.8);internal.push(actor);organActors.set(id,actor);
       }
     }
     const mesh=(color:Vec3,opacity:number)=>{
@@ -82,6 +86,11 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
       if(disposed)return;
       const c=add(center,[panX,0,panZ]),camera=renderer.getActiveCamera();camera.setParallelProjection(true);camera.setFocalPoint(...c);
       camera.setPosition(c[0]+span*4*Math.sin(yaw)*Math.cos(pitch),c[1]+span*4*Math.cos(yaw)*Math.cos(pitch),c[2]+span*4*Math.sin(pitch));camera.setViewUp(0,0,1);camera.setParallelScale(scale);renderer.resetCameraClippingRange();grw.getRenderWindow().render();
+    };
+    emphasize.current=id=>{
+      internal.forEach(actor=>actor.getProperty().setOpacity(id===undefined ? .9 : .08));
+      organActors.forEach((actor,organId)=>actor.getProperty().setOpacity(id===undefined?(volume.surfaces?1:.8):organId===id?1:.08));
+      draw();
     };
     reset.current=()=>{yaw=.15;pitch=.04;scale=span*.56;panX=panZ=0;draw();};
     focus.current=()=>{scale=Math.min(span*.56,170);panX=probeOrigin[0]-center[0];panZ=probeOrigin[2]-center[2];draw();};
@@ -155,9 +164,10 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
     const observer=new ResizeObserver(()=>{grw.resize();draw();});observer.observe(element);grw.resize();draw();
     return()=>{
       disposed=true;cancelAnimationFrame(animation);observer.disconnect();element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);element.removeEventListener('wheel',wheel);element.removeEventListener('contextmenu',context);
-      update.current=()=>{};reset.current=()=>{};focus.current=()=>{};skinOpacity.current=()=>{};grw.delete();owned.reverse().forEach(o=>o.delete());
+      update.current=()=>{};reset.current=()=>{};focus.current=()=>{};skinOpacity.current=()=>{};emphasize.current=()=>{};grw.delete();owned.reverse().forEach(o=>o.delete());
     };
   },[volume]);
+  useEffect(()=>emphasize.current(highlightedOrgan),[highlightedOrgan,volume]);
   useEffect(()=>update.current(settings),[volume,settings]);
   useEffect(()=>setInside(volume.kind==='anatomy'),[volume]);
   useEffect(()=>{if(focusRequest)focus.current();},[focusRequest]);

@@ -8,6 +8,7 @@ try{
   await p.waitForFunction(()=>document.querySelector('canvas[data-source="acquired"]')?.dataset.ready==='true'&&document.querySelector('.us-image-area')?.getAttribute('aria-busy')==='false',{},{timeout:90000});
   if(source==='anatomy'){await p.getByRole('button',{name:'전신 인체 팬텀',exact:true}).click();await p.waitForFunction(()=>document.querySelector('canvas[data-source="anatomy"]')?.dataset.ready==='true'&&document.querySelector('.us-image-area')?.getAttribute('aria-busy')==='false',null,{timeout:90000});}
   const initialMs=Date.now()-start;
+  await p.getByRole('tab',{name:'방향',exact:true}).click();
   const result=await p.evaluate(async()=>{
     const times=[];let previous=performance.now(),running=true;
     const tick=now=>{times.push(now-previous);previous=now;if(running)requestAnimationFrame(tick);};requestAnimationFrame(tick);
@@ -20,7 +21,7 @@ try{
     times.sort((a,b)=>a-b);
     return {rafP95Ms:times[Math.floor(times.length*.95)],maxFrameMs:Math.max(...times),renderedFrames:frames.length,elapsedMs:performance.now()-frames[0],calculation:document.querySelector('.us-image-controls>span')?.textContent};
   });
-  await p.getByRole('button',{name:source==='acquired'?'갑상선 중심으로 복귀':'자세·영상 설정 초기화',exact:true}).click();
+  await p.getByRole('button',{name:'자세·영상 설정 초기화',exact:true}).click();
   const bounds=await p.locator('.us-scene-canvas').boundingBox(),x=bounds.x+bounds.width*.5,y=bounds.y+bounds.height*.42;
   const dragStart=Date.now();await p.mouse.move(x,y);await p.mouse.down();
   for(let step=0;step<20;step++)await p.mouse.move(x+step,y+step*.5);

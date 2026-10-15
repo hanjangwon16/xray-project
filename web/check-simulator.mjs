@@ -25,6 +25,7 @@ try {
   assert.equal(await page.getByRole('button',{name:'피부 보기',exact:true}).isVisible(),true);
   await page.getByRole('button',{name:'탐촉자 확대',exact:true}).click();
   await page.screenshot({path:'/tmp/xray-simulator-internal.png'});
+  await page.getByRole('tab',{name:'방향',exact:true}).click();
   await page.getByRole('slider',{name:'탐촉자 회전',exact:true}).fill('90');await pose('anatomy',90);assert.notEqual(await pixels(),body);
   await page.getByRole('button',{name:'실제 복부 CT 기반',exact:true}).click();await pose('human',0);
   const original=await pixels();
@@ -32,10 +33,12 @@ try {
   await page.getByRole('button',{name:'B-mode 보기',exact:true}).click();assert.equal(await pixels(),original);
   assert.ok(await image.evaluate(c=>{const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return d.some((v,i)=>i%4!==3&&v>30);}));
   await page.screenshot({path:'/tmp/xray-simulator-human.png'});
+  await page.getByRole('tab',{name:'방향',exact:true}).click();
   await page.getByRole('slider',{name:'탐촉자 회전',exact:true}).fill('90');
   await page.waitForFunction(s=>document.querySelector('canvas[aria-label="초음파 단면 영상"]').toDataURL()!==s,original);await ready();
   const rotated=await pixels();assert.notEqual(rotated,original);
   await page.getByRole('button',{name:'영상 정지',exact:true}).click();
+  await page.getByRole('tab',{name:'위치',exact:true}).click();
   assert.equal(await page.getByRole('slider',{name:'좌우 위치',exact:true}).isDisabled(),true);
   assert.equal(await page.getByRole('button',{name:'실측 시험 팬텀',exact:true}).isDisabled(),true);
   assert.equal(await pixels(),rotated);
@@ -52,7 +55,7 @@ try {
   await page.getByRole('button',{name:'실측 시험 팬텀',exact:true}).click();await pose('phantom',0);
   assert.equal(await page.locator('.us-panel-heading').last().textContent(),'02 / B-MODE실측 볼륨 · 재단면');
   assert.ok(Number(await image.getAttribute('data-coverage'))>.1);
-  const phantom=await pixels();await page.getByRole('slider',{name:'탐촉자 회전',exact:true}).fill('45');await pose('phantom',45);
+  const phantom=await pixels();await page.getByRole('tab',{name:'방향',exact:true}).click();await page.getByRole('slider',{name:'탐촉자 회전',exact:true}).fill('45');await pose('phantom',45);
   await page.waitForFunction(s=>document.querySelector('canvas[aria-label="초음파 단면 영상"]').toDataURL()!==s,phantom);
   await page.screenshot({path:'/tmp/xray-simulator-phantom.png'});await noOverflow();
   for(const viewport of [{width:1024,height:768},{width:390,height:844}]) {
