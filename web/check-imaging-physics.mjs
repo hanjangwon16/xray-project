@@ -61,4 +61,20 @@ const centroidX=id=>{let sum=0,n=0;labels.forEach((label,i)=>{if(label===id){sum
 assert.ok(centroidX(2)>0&&centroidX(3)<0,'Kidneys must retain patient laterality');
 const anatomy={data:Int16Array.from(labels,id=>id===0?-1000:id===11?1000:20),labels,dims:meta.dims,spacing:meta.spacing,origin:meta.origin,kind:'anatomy'};
 assert.equal(renderUltrasound(anatomy,DEFAULT_PROBE,64).reference,null,'Anatomical materials must not be presented as acquired CT');
-console.log(JSON.stringify({passed:true,checks:['probe orthonormality and image/3D coordinates','trilinear interpolation','deterministic spatial scattering','bone shadow','frequency attenuation','gain','no-contact blank','measured constant intensity','shared Xray geometry','symmetric AP/PA','DRR thickness comparison'],normalUsMs:normal.ms}));
+const usFolder=new URL('./public/ultrasound/segthy/',import.meta.url),usMeta=JSON.parse(readFileSync(new URL('case.json',usFolder),'utf8'));
+const acquired={data:new Uint8Array(gunzipSync(readFileSync(new URL(usMeta.file,usFolder)))),labels:new Uint8Array(gunzipSync(readFileSync(new URL(usMeta.labels,usFolder)))),dims:usMeta.dims,spacing:usMeta.spacing,origin:usMeta.origin,kind:'acquired'};
+for(const [file,data] of [['volume.bin',acquired.data],['labels.bin',acquired.labels]])assert.equal(createHash('sha256').update(data).digest('hex'),usMeta.sha256[file]);
+let xSum=0,zSum=0,count=0;acquired.labels.forEach((id,i)=>{if(id===1){xSum+=i%usMeta.dims[0];zSum+=Math.floor(i/(usMeta.dims[0]*usMeta.dims[1]));count++;}});
+assert.ok(count>1000);
+const acquiredPose={...DEFAULT_PROBE,probe:'linear',depth:55,lateral:xSum/count/(usMeta.dims[0]-1)*100,height:zSum/count/(usMeta.dims[2]-1)*100};
+const acquiredFrame=renderUltrasound(acquired,acquiredPose,128),acquiredGeometry=probeGeometry(acquired,acquiredPose);
+let thyroidPixels=0;
+for(let row=0;row<128;row++)for(let col=0;col<acquiredFrame.width;col++) {
+  const p=imagePoint(acquiredGeometry,acquiredPose,col,acquiredFrame.width,128,row),value=sample(acquired,p);
+  const expected=new Uint8ClampedArray([value??0])[0];
+  assert.equal(acquiredFrame.pixels[row*acquiredFrame.width+col],expected,'Measured pixels must be interpolated source signal');
+  if(acquiredFrame.labels[row*acquiredFrame.width+col]===1)thyroidPixels++;
+}
+assert.ok(thyroidPixels>100,'Default measured plane must show the thyroid');
+assert.deepEqual(renderUltrasound(acquired,{...acquiredPose,frequency:2,tgc:0},128).pixels,acquiredFrame.pixels,'No synthetic attenuation in acquired mode');
+console.log(JSON.stringify({passed:true,checks:['probe orthonormality and image/3D coordinates','trilinear interpolation','deterministic spatial scattering','bone shadow','frequency attenuation','gain','no-contact blank','measured constant intensity','shared Xray geometry','symmetric AP/PA','DRR thickness comparison','SegThy signal hashes and exact source interpolation','thyroid visible on default plane','no synthetic attenuation in acquired mode'],normalUsMs:normal.ms}));

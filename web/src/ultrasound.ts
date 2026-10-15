@@ -6,7 +6,7 @@ export interface UsVolume {
   dims: Vec3;
   spacing: Vec3;
   origin: Vec3;
-  kind: 'human' | 'phantom' | 'anatomy';
+  kind: 'human' | 'phantom' | 'anatomy' | 'acquired';
   skinPoints?: Float32Array;
 }
 export interface ProbeSettings {
@@ -55,8 +55,8 @@ export function labelAt(v: UsVolume, p: Vec3): number {
 export function probeGeometry(v: UsVolume, s: ProbeSettings): ProbeGeometry {
   const x=v.origin[0]+(v.dims[0]-1)*v.spacing[0]*s.lateral/100;
   const z=v.origin[2]+(v.dims[2]-1)*v.spacing[2]*s.height/100;
-  let y=v.origin[1]+(v.dims[1]-1)*v.spacing[1], contact=v.kind==='phantom';
-  if(v.kind!=='phantom') {
+  let y=v.origin[1]+(v.dims[1]-1)*v.spacing[1], contact=v.kind==='phantom'||v.kind==='acquired';
+  if(v.kind==='human'||v.kind==='anatomy') {
     // Constrain the transducer to the anterior skin surface, not the CT box.
     for(let j=v.dims[1]-1;j>=0;j--) {
       const yp=v.origin[1]+j*v.spacing[1];
@@ -116,6 +116,19 @@ export function scatter(p:Vec3):number {
 }
 export function renderUltrasound(v:UsVolume,s:ProbeSettings,size=320):UsFrame {
   const start=performance.now(),g=probeGeometry(v,s),lines=192,samples=320,ds=s.depth/(samples-1);
+  if(v.kind==='acquired'||v.kind==='phantom') {
+    const width=Math.round(size*(s.probe==='linear'?50/s.depth:2*Math.sin(rad(35))));
+    const pixels=new Uint8ClampedArray(width*size),labels=new Uint8Array(width*size);
+    let inside=0,total=0;
+    for(let row=0;row<size;row++)for(let col=0;col<width;col++) {
+      const p=imagePoint(g,s,col,width,size,row);if(!p)continue;total++;
+      if(!g.contact)continue;
+      const value=sample(v,p);if(value===null)continue;inside++;
+      pixels[row*width+col]=Math.max(0,Math.min(255,value*Math.pow(10,s.gain/20)));
+      labels[row*width+col]=labelAt(v,p);
+    }
+    return {width,height:size,pixels,labels,reference:null,coverage:total?inside/total:0,ms:performance.now()-start};
+  }
   const signal=new Float32Array(lines*samples),valid=new Uint8Array(lines*samples),labels=new Uint8Array(lines*samples);
   if(g.contact)for(let l=0;l<lines;l++) {
     let loss=0,previous=0;
@@ -124,7 +137,6 @@ export function renderUltrasound(v:UsVolume,s:ProbeSettings,size=320):UsFrame {
       if(value===null){previous=0;continue;}
       valid[index]=1;
       const lid=labelAt(v,p);labels[index]=lid;
-      if(v.kind==='phantom') {signal[index]=Math.max(0,Math.min(255,value*Math.pow(10,s.gain/20)));continue;}
       const [z,alpha,scattering]=material(value,lid);
       const reflection=previous?Math.abs((z-previous)/(z+previous)):0;
       const amplitude=scattering*scatter(p)+reflection*2;

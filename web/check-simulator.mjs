@@ -12,6 +12,8 @@ const noOverflow=async()=>assert.equal(await page.evaluate(()=>document.document
 try {
   await page.goto(base);
   await page.getByRole('button',{name:'초음파 촬영 연습',exact:true}).click();await ready();
+  await pose('acquired',0);
+  await page.getByRole('button',{name:'전신 인체 팬텀',exact:true}).click();await ready();
   await pose('anatomy',0);
   const body=await pixels();
   await page.screenshot({path:'/tmp/xray-simulator-fullbody.png'});

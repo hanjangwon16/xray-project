@@ -1,0 +1,71 @@
+{
+  "id": "segthy-001-left",
+  "dims": [
+    243,
+    227,
+    185
+  ],
+  "spacing": [
+    0.23999999463558197,
+    0.23999999463558197,
+    0.23999999463558197
+  ],
+  "origin": [
+    0,
+    0,
+    0
+  ],
+  "coordinateSystem": "Native reconstruction voxel axes in mm, local origin; not registered to the whole-body atlas",
+  "nativeSform": [
+    -0.11999999731779099,
+    1.6165337924728624e-16,
+    0.0,
+    29.099998474121094,
+    -1.6165337924728624e-16,
+    -0.11999999731779099,
+    -0.0,
+    27.119998931884766,
+    0.0,
+    -0.0,
+    0.11999999731779099,
+    -22.139999389648438
+  ],
+  "nativeQformCode": 1,
+  "nativeSformCode": 2,
+  "file": "volume.bin.mesh",
+  "labels": "labels.bin.mesh",
+  "sha256": {
+    "volume.bin": "7b74826efc3e07a09d36e3af657fac0798c2c297625d49690fb9cf48c63c735c",
+    "labels.bin": "17b764775ae1126d024d09f5658a943379c196ac6ebda52c215f088d1a24bbb6"
+  },
+  "changes": "Every second original voxel retained in each axis, spacing doubled, local origin. No generated acoustic texture.",
+  "source": "https://www.campar.in.tum.de/public_datasets/2022_plosone_eilers/US_data.zip",
+  "sourceAssets": [
+    {
+      "member": "US_volunteer_dataset/Readme.txt",
+      "bytes": 2363,
+      "sha256": "3704e4b782df5634a45dad554bc83a52ea70cf357103411b70518ded509f9474"
+    },
+    {
+      "member": "US_volunteer_dataset/ground_truth_data/US/001_P1_1_left_US.nii",
+      "bytes": 81458812,
+      "sha256": "a121ae56daad64b91183190faa08dc53fa71a27608e41919034076fc4538b293"
+    },
+    {
+      "member": "US_volunteer_dataset/ground_truth_data/US_thyroid_label/001_P1_1_left.nii",
+      "bytes": 81458812,
+      "sha256": "a77aa43696526e6167445ddbc72a99d300390c99f312740e4a673b1072e6cf87"
+    }
+  ],
+  "license": "CC BY, version unspecified by original publisher; commercial use explicitly permitted",
+  "labelMap": {
+    "1": "갑상선 · 왼쪽 엽",
+    "2": "혈관 분할 #2",
+    "3": "혈관 분할 #3"
+  },
+  "originalDims": [
+    486,
+    453,
+    370
+  ]
+}

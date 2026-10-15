@@ -43,11 +43,16 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
       poly.getPolys().setData(faces);
       const mapper=own(vtkMapper.newInstance());mapper.setInputData(poly);
       skin=own(vtkActor.newInstance());skin.setMapper(mapper);skin.getProperty().setColor(.72,.58,.47);skin.getProperty().setAmbient(.25);skin.getProperty().setDiffuse(.75);skin.getProperty().setSpecular(.15);skin.getProperty().setSpecularPower(20);renderer.addActor(skin);
+    } else if(volume.kind==='acquired') {
+      const support=own(vtkImageData.newInstance({origin:volume.origin,spacing:volume.spacing}));support.setDimensions(volume.dims);
+      support.getPointData().setScalars(own(vtkDataArray.newInstance({values:Uint8Array.from(volume.data,x=>x>0?1:0),numberOfComponents:1})));
+      skin=surface(support,.5,[.66,.76,.8],.08);
     } else skin=surface(image,volume.kind==='human'?-300:50,[.66,.76,.8],volume.kind==='human'?.13:.5);
     const internal:ReturnType<typeof vtkActor.newInstance>[]=[];
     if(volume.kind!=='phantom') {
-      internal.push(surface(image,350,[.89,.86,.75],.9));
-      if(volume.labels)for(const [id,color] of [[5,[.78,.35,.32]],[2,[1,.64,.35]],[3,[1,.78,.4]],[1,[.65,.45,.85]],[6,[.84,.65,.43]]] as [number,Vec3][]) {
+      if(volume.kind!=='acquired')internal.push(surface(image,350,[.89,.86,.75],.9));
+      const structures:[number,Vec3][]=volume.kind==='acquired'?[[1,[.94,.46,.38]],[2,[.3,.85,.82]],[3,[.68,.5,.95]]]:[[5,[.78,.35,.32]],[2,[1,.64,.35]],[3,[1,.78,.4]],[1,[.65,.45,.85]],[6,[.84,.65,.43]]];
+      if(volume.labels)for(const [id,color] of structures) {
         const mask=own(vtkImageData.newInstance({origin:volume.origin,spacing:volume.spacing}));mask.setDimensions(volume.dims);
         mask.getPointData().setScalars(own(vtkDataArray.newInstance({values:Uint8Array.from(volume.labels,x=>x===id?1:0),numberOfComponents:1})));
         internal.push(surface(mask,.5,color,.8));
@@ -72,7 +77,7 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
     };
     reset.current=()=>{yaw=.15;pitch=.04;scale=span*.56;panX=panZ=0;draw();};
     focus.current=()=>{scale=Math.min(span*.56,170);panX=probeOrigin[0]-center[0];panZ=probeOrigin[2]-center[2];draw();};
-    skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
+    skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='acquired'?(value?.02:.08):volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
     update.current=s=>{
       const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);probe.actor.setVisibility(g.contact||!!s.lifted);edges.actor.setVisibility(g.contact);marker.actor.setVisibility(g.contact||!!s.lifted);
       const pts:Vec3[]=s.probe==='linear'?[rayPoint(g,s,0,0),rayPoint(g,s,1,0),rayPoint(g,s,1,s.depth),rayPoint(g,s,0,s.depth)]:[g.origin,...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
@@ -82,10 +87,11 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
       edges.poly.getPoints().setData(new Float32Array(pts.flat()),3);
       const boundary=s.probe==='linear'?[0,1,2,3,0]:[0,...Array.from({length:41},(_,i)=>i+1),0];
       edges.poly.getLines().setData(new Uint32Array([boundary.length,...boundary]));edges.poly.modified();
-      const box=(offset:number,width:number,thickness:number,length:number):Vec3[]=>[-1,1].flatMap(d=>[-1,1].flatMap(n=>[-1,1].map(a=>add(add(add(g.origin,g.inward,offset+d*length),g.normal,n*thickness),g.across,a*width))));
+      const glyphScale=volume.kind==='acquired'?.2:1;
+      const box=(offset:number,width:number,thickness:number,length:number):Vec3[]=>[-1,1].flatMap(d=>[-1,1].flatMap(n=>[-1,1].map(a=>add(add(add(g.origin,g.inward,(offset+d*length)*glyphScale),g.normal,n*thickness*glyphScale),g.across,a*width*glyphScale))));
       const faces=[3,0,1,3,3,0,3,2,3,4,6,7,3,4,7,5,3,0,4,5,3,0,5,1,3,2,3,7,3,2,7,6,3,0,2,6,3,0,6,4,3,1,5,7,3,1,7,3];
       setMesh(probe.poly,box(-14,s.probe==='linear'?27:17,6,13),faces);
-      setMesh(marker.poly,box(-27,3,6.5,1).map(p=>add(p,g.across,-13)),faces);draw();
+      setMesh(marker.poly,box(-27,3,6.5,1).map(p=>add(p,g.across,-13*glyphScale)),faces);draw();
     };
     const pick=(x:number,y:number)=>{
       if(interaction.current.frozen)return;
@@ -149,9 +155,9 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
   return <div className="us-scene">
     <div className="us-scene-viewport">
       <div ref={host} className="us-scene-canvas" data-manipulation={mode} aria-label="3D 인체와 초음파 탐촉자"/>
-      <div className="us-scene-actions"><button onClick={()=>reset.current()}>{volume.kind==='anatomy'?'전신 보기':'시점 복귀'}</button><button onClick={()=>focus.current()}>탐촉자 확대</button>{volume.kind!=='phantom'&&<button className={inside?'active':''} onClick={()=>setInside(s=>!s)}>{inside?'피부 보기':'내부 장기 보기'}</button>}</div>
+      <div className="us-scene-actions"><button onClick={()=>reset.current()}>{volume.kind==='anatomy'?'전신 보기':'시점 복귀'}</button><button onClick={()=>focus.current()}>{volume.kind==='acquired'?'단면 조작점 확대':'탐촉자 확대'}</button>{volume.kind!=='phantom'&&<button className={inside?'active':''} onClick={()=>setInside(s=>!s)}>{volume.kind==='acquired'?(inside?'촬영 범위 보기':'분할 강조'):inside?'피부 보기':'내부 장기 보기'}</button>}</div>
     </div>
     <div className="us-hand-modes" role="group" aria-label="탐촉자 손동작">{MODES.map(([id,title])=><button key={id} aria-pressed={mode===id} disabled={frozen&&id!=='camera'} onClick={()=>setMode(id)}>{title}</button>)}</div>
-    <div className="us-scene-caption">{mode==='slide'?'피부를 누른 채 밀어 이동 · 몸 밖으로 빼면 접촉 해제':mode==='rotate'?'좌우 드래그: 탐촉자 축 회전':mode==='tilt'?'상하 드래그: 앞뒤로 기울이기':mode==='rock'?'좌우 드래그: 좌우로 기울이기':'드래그: 시점 회전 · Alt 드래그: 화면 이동'}<br/>Shift 또는 우클릭 드래그: 화면 회전 · 휠: 확대</div>
+    <div className="us-scene-caption">{mode==='slide'?(volume.kind==='acquired'?'실측 촬영 범위를 눌러 단면 이동 · 실제 피부 표면이 아닙니다.':'피부를 누른 채 밀어 이동 · 몸 밖으로 빼면 접촉 해제'):mode==='rotate'?'좌우 드래그: 탐촉자 축 회전':mode==='tilt'?'상하 드래그: 앞뒤로 기울이기':mode==='rock'?'좌우 드래그: 좌우로 기울이기':'드래그: 시점 회전 · Alt 드래그: 화면 이동'}<br/>Shift 또는 우클릭 드래그: 화면 회전 · 휠: 확대</div>
   </div>;
 }

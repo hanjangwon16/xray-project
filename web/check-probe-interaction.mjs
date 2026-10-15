@@ -12,6 +12,7 @@ const drag=async(x,y,dx,dy)=>{await page.mouse.move(x,y);await page.mouse.down()
 try {
   await page.goto(process.env.TEST_URL||'http://127.0.0.1:4190');
   await page.getByRole('button',{name:'초음파 촬영 연습',exact:true}).click();await ready();
+  await page.getByRole('button',{name:'전신 인체 팬텀',exact:true}).click();await ready();
   const r=await scene.boundingBox(),x=r.x+r.width*.5,y=r.y+r.height*.42;
   await page.mouse.move(x,y);await page.mouse.down();await ready();
   await image.evaluate(c=>{
