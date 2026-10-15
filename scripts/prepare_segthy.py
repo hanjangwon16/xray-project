@@ -94,5 +94,5 @@ if __name__ == '__main__':
                 'source': URL, 'sourceAssets': records, 'license': 'CC BY, version unspecified by original publisher; commercial use explicitly permitted',
                 'labelMap': {'1': '갑상선 · 왼쪽 엽', '2': '혈관 분할 #2', '3': '혈관 분할 #3'}, 'originalDims': list(image.shape[::-1])}
     (output/'case.json').write_text(json.dumps(metadata, ensure_ascii=False, indent=2))
-    (output/'LICENSE.txt').write_bytes((folder/'Readme.txt').read_bytes())
+    (output/'LICENSE.txt').write_text('\n'.join(line.rstrip() for line in (folder/'Readme.txt').read_text().splitlines()).rstrip()+'\n')
     print(json.dumps({'dims': dims, 'labels': int(np.count_nonzero(mask[::2,::2,::2])), 'source': records}, indent=2))

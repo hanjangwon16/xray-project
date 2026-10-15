@@ -2,13 +2,13 @@ Munich, February 24th, 2023
 
 This folder contains ultrasound scans of the thyroid and its segmentation from 28 healthy volunteers. Three physicians scanned each volunteer three times and scans of the left and right lobe are saved in two different files, resulting in 18 US scans and segmentation labels per volunteer.
 One folder (network_results) contains the US scans and corresponing thyroid segmentations from the trained QuickNAT for all volunteers. Both US scans and labels are presented in a 3D volume and are saved as compressed NiFTi. To get the NiFTi files, the compressed files can easily be extracted with any compressing program.
-The other folder (ground_truth_data) contains US scans and manually annotated thyroid segmentations that were used for training. Furthermore, the carotid arteries and jugular veins are manually segmented in these scans. Both US scans and labels are presented in a 3D volume and are saved as NiFTi. 
+The other folder (ground_truth_data) contains US scans and manually annotated thyroid segmentations that were used for training. Furthermore, the carotid arteries and jugular veins are manually segmented in these scans. Both US scans and labels are presented in a 3D volume and are saved as NiFTi.
 
-The US and segmentation data have varying sizes and a spacing of 0.12 mm. 
-The US images have an image intensity range of [0;247]. 
-The label maps are binary, with the thyroid value being 1 and the background being 0.  
+The US and segmentation data have varying sizes and a spacing of 0.12 mm.
+The US images have an image intensity range of [0;247].
+The label maps are binary, with the thyroid value being 1 and the background being 0.
 
-File naming: The first three digits represent one subject, the next digit with a preceding P represents a physician, and the third digit represents the scan number. 
+File naming: The first three digits represent one subject, the next digit with a preceding P represents a physician, and the third digit represents the scan number.
 So for example '002_P1_3_right' means that this is the third US scan of the right lobe from volunteer 002, performed by physician P1.
 
 This dataset is licensed under a CC BY license. This means that users of it can be distributed, shuffled, adapted, and built upon any material with the sole condition that the creators are acknowledged by citing the following article:

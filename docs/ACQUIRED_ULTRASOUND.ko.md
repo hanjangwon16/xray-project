@@ -10,7 +10,7 @@
 - 원본 486×453×370, uint8, 약 0.12mm. 웹은 각 축의 매 두 번째 원본 voxel을 유지한 243×227×185, 약 0.24mm이다. 인공 산란·감쇠를 덧붙이지 않는다.
 - 영상과 분할의 dimensions, spacing, 방향 헤더가 일치하는지 검사한다. 원본과 파생물 SHA-256, 원본 sform, qform code 및 변환은 public/ultrasound/segthy/case.json에 기록한다.
 - 로컬 좌표는 원본 voxel 축에 mm spacing을 적용한 좌표다. 환자 RAS나 BodyParts3D와 정합된 좌표가 아니다. 분할 1은 갑상선이며, 2·3은 혈관 구조로 원본 ID를 유지한다. 혈관 개별 이름은 추가 확인 전 표시하지 않는다.
-- CC BY: 원 배포처는 버전을 명시하지 않고 저작자 인용을 조건으로 상업 이용을 허용한다. 원 Readme를 LICENSE.txt로 그대로 배포한다.
+- CC BY: 원 배포처는 버전을 명시하지 않고 저작자 인용을 조건으로 상업 이용을 허용한다. 원 Readme의 문구를 LICENSE.txt로 배포하며 줄바꿈·줄끝 공백만 정리한다.
 
 ## 동작과 한계
 
