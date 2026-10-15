@@ -1,9 +1,10 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {loadCase} from './volume';
 import {DEFAULT_PROBE,probeGeometry,imagePoint,voxelPoint,type ProbeSettings,type UsVolume,type UsFrame,type Vec3} from './ultrasound';
 import UltrasoundScene from './UltrasoundScene';
 import {labelName} from './labels';
 import {ORGAN_NAMES,ultrasoundColor} from './ultrasoundLabels';
+import ThyroidPractice from './ThyroidPractice';
 
 function readSurfaces(data:ArrayBuffer,entries:{id:number;vertices:number;triangles:number;offset:number;bytes:number}[]) {
   return entries.map(entry=>{
@@ -25,11 +26,14 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
   const [focusRequest,setFocusRequest]=useState(0);
   const [control,setControl]=useState('position'),[selectedOrgan,setSelectedOrgan]=useState(initialOrgan),[highlight,setHighlight]=useState(false);
   const [frozen,setFrozen]=useState(false),[overlay,setOverlay]=useState(false),[hover,setHover]=useState(''),[target,setTarget]=useState('간');
+  const [pick,setPick]=useState<{frame:UsFrame & {settings:ProbeSettings};label:number}|null>(null),[cursor,setCursor]=useState<[number,number]|null>(null);
   const worker=useRef<Worker|null>(null),request=useRef(0),canvas=useRef<HTMLCanvasElement>(null);
   const submit=useRef<(pose:ProbeSettings)=>void>(()=>{});
+  const thyroidPose=useMemo(()=>volume?.kind==='acquired'?{...DEFAULT_PROBE,...organPosition(volume,1),depth:55,probe:'linear' as const,frequency:12}:null,[volume]);
+  const selectPixel=(x:number,y:number)=>{if(control!=='practice'||busy||!frame||JSON.stringify(settings)!==JSON.stringify(frame.settings))return;const col=Math.round(Math.max(0,Math.min(1,x))*(frame.width-1)),row=Math.round(Math.max(0,Math.min(1,y))*(frame.height-1));setCursor([x,y]);setPick({frame,label:frame.labels[row*frame.width+col]});};
   useEffect(()=>{
     const abort=new AbortController();let disposed=false;
-    setVolume(null);setFrame(null);setError('');setBusy(true);setFrozen(false);setHover('');setReference(false);setControl('position');setHighlight(false);setSelectedOrgan(source==='acquired'?1:initialOrgan);
+    setVolume(null);setFrame(null);setError('');setBusy(true);setFrozen(false);setHover('');setReference(false);setControl('position');setHighlight(false);setSelectedOrgan(source==='acquired'?1:initialOrgan);setPick(null);setCursor(null);
     (async()=>{
       let v:UsVolume;
       if(source==='human') {
@@ -104,7 +108,8 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
     ctx.putImageData(img,0,0);
     ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillStyle='#b6c9c9';ctx.strokeStyle='#849b9b';
     for(let tick=1;tick<=5;tick++){const y=Math.min(c.height-4,tick/5*c.height);ctx.fillText((frame.settings.depth/10*tick/5).toFixed(1),c.width-10,y);ctx.beginPath();ctx.moveTo(c.width-7,y-3);ctx.lineTo(c.width-2,y-3);ctx.stroke();}
-  },[frame,overlay,reference]);
+    if(control==='practice'&&cursor){const x=cursor[0]*(c.width-1),y=cursor[1]*(c.height-1);ctx.strokeStyle='#fbc842';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.moveTo(x-9,y);ctx.lineTo(x+9,y);ctx.moveTo(x,y-9);ctx.lineTo(x,y+9);ctx.stroke();}
+  },[frame,overlay,reference,control,cursor]);
   const changeSource=(next:UsVolume['kind'])=>{if(next===source||frozen)return;request.current++;setVolume(null);setFrame(null);setBusy(true);setSource(next);};
   const change=(patch:Partial<ProbeSettings>)=>{if(!frozen){
     if(patch.lateral!==undefined||patch.height!==undefined){if(!patch.contact)patch={...patch,contact:undefined,lifted:false};setTarget('자유 스캔');}
@@ -120,12 +125,12 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
     if(p)onOpenCase(mode,p);
   };
   return <section className="us-workspace" aria-label="초음파 촬영 시뮬레이터">
-    <aside className="us-tools">
+    <aside className={'us-tools'+(control==='practice'?' is-practicing':'')}>
       <div className="us-eyebrow">ULTRASOUND LAB</div><h2>인체 → 탐촉자 → 단면</h2>
-      <div className="us-source-tabs us-datasets"><button disabled={frozen} className={source==='acquired'?'active':''} onClick={()=>changeSource('acquired')}>실제 인체 3D 초음파 · 갑상선</button><button disabled={frozen} className={source==='phantom'?'active':''} onClick={()=>changeSource('phantom')}>실측 시험 팬텀</button><button disabled={frozen} className={source==='anatomy'?'active':''} onClick={()=>changeSource('anatomy')}>전신 인체 팬텀</button><button disabled={frozen} className={source==='human'?'active':''} onClick={()=>changeSource('human')}>실제 복부 CT 기반</button></div>
-      {source==='acquired'&&<p className="us-muted">SegThy · 실제 측정 B-mode와 같은 사례의 수동 분할. 왼쪽 목의 촬영 범위만 제공합니다. 전신 아틀라스와 정합되지 않았습니다.</p>}
+      <div className="us-source-tabs us-datasets" hidden={control==='practice'}><button disabled={frozen} className={source==='acquired'?'active':''} onClick={()=>changeSource('acquired')}>실제 인체 3D 초음파 · 갑상선</button><button disabled={frozen} className={source==='phantom'?'active':''} onClick={()=>changeSource('phantom')}>실측 시험 팬텀</button><button disabled={frozen} className={source==='anatomy'?'active':''} onClick={()=>changeSource('anatomy')}>전신 인체 팬텀</button><button disabled={frozen} className={source==='human'?'active':''} onClick={()=>changeSource('human')}>실제 복부 CT 기반</button></div>
+      {source==='acquired'&&control!=='practice'&&<p className="us-muted">SegThy · 실제 측정 B-mode와 같은 사례의 수동 분할. 왼쪽 목의 촬영 범위만 제공합니다. 전신 아틀라스와 정합되지 않았습니다.</p>}
       {source==='anatomy'&&<p className="us-muted">전신 피부와 8개 장기 · 4mm 재료 근사. 장기를 선택하면 해당 부위를 확대합니다. B-mode는 실측이 아닌 합성 영상입니다.</p>}
-      <div className="us-control-tabs" role="tablist" aria-label="초음파 조작 설정" onKeyDown={e=>{const ids=['position','direction','image'],index=ids.indexOf(control),next=e.key==='ArrowRight'?(index+1)%3:e.key==='ArrowLeft'?(index+2)%3:e.key==='Home'?0:e.key==='End'?2:-1;if(next>=0){e.preventDefault();setControl(ids[next]);document.getElementById('us-tab-'+ids[next])?.focus();}}}>{[['position','위치'],['direction','방향'],['image','영상']].map(([id,name])=><button key={id} id={'us-tab-'+id} role="tab" tabIndex={control===id?0:-1} aria-selected={control===id} aria-controls={'us-controls-'+id} onClick={()=>setControl(id)}>{name}</button>)}</div>
+      <div className="us-control-tabs" role="tablist" aria-label="초음파 조작 설정" onKeyDown={e=>{const ids=['position','direction','image',...(source==='acquired'?['practice']:[])],index=ids.indexOf(control),next=e.key==='ArrowRight'?(index+1)%ids.length:e.key==='ArrowLeft'?(index+ids.length-1)%ids.length:e.key==='Home'?0:e.key==='End'?ids.length-1:-1;if(next>=0){e.preventDefault();setControl(ids[next]);document.getElementById('us-tab-'+ids[next])?.focus();}}}>{[['position','위치'],['direction','방향'],['image','영상'],...(source==='acquired'?[['practice','연습']]:[])].map(([id,name])=><button key={id} id={'us-tab-'+id} role="tab" tabIndex={control===id?0:-1} aria-selected={control===id} aria-controls={'us-controls-'+id} onClick={()=>setControl(id)}>{name}</button>)}</div>
       <div className="us-control-section" role="tabpanel" id="us-controls-position" aria-labelledby="us-tab-position" hidden={control!=='position'}><h3>01 <span>탐색 위치</span></h3>
       {source==='acquired'&&<button disabled={frozen||!volume} onClick={reset}>갑상선 중심으로 복귀</button>}
       {!measured&&<div className="us-organ-presets">{(source==='anatomy'?[5,8,7,2,3,1,6,9]:[5,2,3,1]).map(id=><button disabled={frozen||!volume} aria-pressed={selectedOrgan===id} className={selectedOrgan===id?'active':''} key={id} onClick={()=>{const p=volume&&organPosition(volume,id);if(p){change({...p,rotation:0,tilt:0,rock:0});setSelectedOrgan(id);setTarget(ORGAN_NAMES[id]);setFocusRequest(n=>n+1);}}}><i style={{background:`rgb(${ultrasoundColor(source,id)?.join(',')})`}}/>{ORGAN_NAMES[id]}</button>)}</div>}
@@ -140,9 +145,12 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
       {slider('standoff',measured?'표시 시작 거리':'젤 스탠드오프 거리',0,30,1,'mm')}
       {slider('depth','영상 깊이',measured?15:40,measured?85:220,1,'mm')}{slider('gain','전체 Gain',-24,24,1,'dB')}
       {!measured&&<>{slider('frequency','주파수',2,15,.5,'MHz')}{slider('tgc','깊이 보상 TGC',0,1.5,.1,'')}<p className="us-muted">주파수·폭·깊이에 따른 감쇠와 횡방향 빔 퍼짐 근사. 젤 거리는 피부 앞 결합층이며 공중 접촉은 해제됩니다. 재료 해상도 이하의 세부 구조는 생성하지 않습니다.</p></>}
-      </div><button className="us-reset" onClick={reset}>자세·영상 설정 초기화</button>
+      </div>
+      {volume&&thyroidPose&&<div role="tabpanel" id="us-controls-practice" aria-labelledby="us-tab-practice" hidden={control!=='practice'}><ThyroidPractice volume={volume} baseline={thyroidPose} frame={frame} busy={busy||!frame||JSON.stringify(settings)!==JSON.stringify(frame.settings)} pick={pick} onPose={pose=>{setFrozen(false);setSettings(pose);setPick(null);setCursor(null);setTarget('갑상선 연습');setFocusRequest(n=>n+1);}} onExplain={()=>{setOverlay(true);setHighlight(true);}} controls={<>{slider('lateral','좌우 위치',0,100,.5,'%')}{slider('height','상하 위치',0,100,.5,'%')}{slider('rotation','탐촉자 회전',-180,180,1,'°')}</>}/></div>}
+      <button className="us-reset" onClick={reset}>자세·영상 설정 초기화</button>
     </aside>
     <main className="us-main">
+      {source==='acquired'&&control!=='practice'&&<button className="us-practice-entry" onClick={()=>setControl('practice')}>갑상선 가이드 연습 · 3단계 시작 →</button>}
       <div className="us-session-heading"><div><span className="us-eyebrow">{source==='anatomy'?'EXPERIMENTAL · ANATOMICAL PHANTOM':source==='human'?'EXPERIMENTAL · CT → ACOUSTIC APPROXIMATION':'MEASURED 3D ULTRASOUND'}</span><h2>{source==='acquired'?'실제 갑상선 영상과 장기 형태를 함께 보세요':source==='anatomy'?'인체 조작 실험 · 합성 영상':source==='human'?'복부 CT 음향 근사 · 실험용':'실측 초음파 볼륨 탐색'}</h2></div><span role="status" className={'us-live '+(frozen||!geometry?.contact?'paused':'')}>{frozen?'Ⅱ 정지':geometry?.contact?(measured?'실측 · 재단면':'● 접촉 · LIVE'):'접촉 해제'}</span></div>
       <div className="us-viewports">
         <article className="us-panel"><div className="us-panel-heading"><span>01 / {source==='acquired'?'같은 사례 · 갑상선 분할':source==='anatomy'?'실제 인체 형상':source==='human'?'실제 CT 기반 인체':'시험용 초음파 팬텀'}</span><span>3D + SCAN PLANE</span></div>
@@ -152,7 +160,7 @@ export default function UltrasoundView({onOpenCase,onOpenReference,initialOrgan=
         </article>
         <article className="us-panel"><div className="us-panel-heading"><span>02 / {reference?'동일면 CT':'B-MODE'}</span><span>{measured?'실측 볼륨 · 재단면':(reference?'실제 CT · 사위 재단면':'합성 · 교육용 근사')}</span></div>
           <div className="us-image-area" aria-busy={busy}>
-            <canvas ref={canvas} aria-label="초음파 단면 영상" data-source={volume?.kind} data-pose={frame?JSON.stringify(frame.settings):''} data-ready={!!frame} data-coverage={frame?.coverage??0} onPointerMove={e=>{
+            <canvas ref={canvas} aria-label="초음파 단면 영상" tabIndex={control==='practice'?0:undefined} aria-describedby={control==='practice'?'us-practice-help':undefined} data-source={volume?.kind} data-pose={frame?JSON.stringify(frame.settings):''} data-ready={!!frame} data-coverage={frame?.coverage??0} onClick={e=>{const r=e.currentTarget.getBoundingClientRect();selectPixel((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);}} onKeyDown={e=>{if(control!=='practice')return;const [x,y]=cursor??[.5,.5];if(e.key==='Enter'||e.key===' '){e.preventDefault();selectPixel(x,y);}else if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();setCursor([Math.max(0,Math.min(1,x+(e.key==='ArrowRight'?.025:e.key==='ArrowLeft'?-.025:0))),Math.max(0,Math.min(1,y+(e.key==='ArrowDown'?.025:e.key==='ArrowUp'?-.025:0)))]);}}} onPointerMove={e=>{
               if(!volume||!geometry||!frame||busy)return;const r=e.currentTarget.getBoundingClientRect(),col=(e.clientX-r.left)/r.width*(frame.width-1),row=(e.clientY-r.top)/r.height*(frame.height-1),p=imagePoint(geometry,settings,col,frame.width,frame.height,row);
               if(!p){setHover('영상 영역 밖');return;}const [i,j,k]=voxelPoint(volume,p).map(Math.round),[nx,ny,nz]=volume.dims;
       const label=volume.labels&&i>=0&&j>=0&&k>=0&&i<nx&&j<ny&&k<nz?volume.labels[i+j*nx+k*nx*ny]:0;

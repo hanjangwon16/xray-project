@@ -150,6 +150,24 @@ button:disabled,input:disabled,select:disabled{opacity:.4;cursor:not-allowed;}
 .us-control-tabs button{flex:1;padding:8px 4px;font-size:12px;}
 .us-control-tabs [aria-selected=true]{background:#245a52;border-color:#6fe0cb;color:#effffb;}
 .us-control-section[hidden]{display:none;}
+.us-datasets[hidden]{display:none;}
+.us-practice-entry{align-self:flex-start;font-size:12px;background:#173a35;border-color:#467f72;}
+.us-practice{font-size:12px;color:#bfd1d7;line-height:1.6;}
+.us-practice h3{font-size:15px;margin:10px 0 6px;color:#e0eeee;}
+.us-practice p{margin:8px 0;}
+.us-practice ol{padding-left:20px;}
+.us-practice figure{margin:10px 0;background:#030607;padding:6px;border:1px solid #293b45;border-radius:6px;}
+.us-practice canvas{display:block;width:100%;max-height:180px;object-fit:contain;}
+.us-practice figcaption{font-size:10px;text-align:center;color:#8da9b1;}
+.us-practice button{font-size:11px;padding:7px;}
+.us-practice-progress{display:flex;flex-wrap:wrap;gap:4px;font-size:9px;color:#78949f;margin-top:8px;}
+.us-practice-progress [aria-current]{color:#a5e6d5;}
+.us-practice-actions{display:flex;gap:5px;}
+.us-practice-result{padding:8px;border:1px solid #796535;background:#312a18;color:#ffdfa0;border-radius:5px;}
+.us-practice-result.passed{border-color:#3a7969;background:#173c32;color:#b1f0d6;}
+.us-practice .us-practice-note{font-size:10px;color:#8aa4af;}
+.us-practice-restart{margin-top:8px;background:transparent;}
+@media(max-width:620px){.us-control-tabs button{font-size:10px;padding:8px 1px;white-space:nowrap;min-width:0;}.us-tools.is-practicing h2{font-size:13px;margin:7px 0;}.is-practicing .us-practice{font-size:10px;line-height:1.5;}.is-practicing .us-practice h3{font-size:12px;}.is-practicing .us-practice canvas{max-height:110px;}.is-practicing .us-slider{margin:9px 0;}.is-practicing .us-practice-progress{font-size:8px;}}
 .us-control-section{margin-top:4px;}
 .us-organ-presets button{display:flex;gap:6px;align-items:center;}
 .us-organ-presets i,.us-target i{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;}

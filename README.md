@@ -9,6 +9,7 @@ CT 단면 + 3D 해부 구조 + 각도별 가상 X-ray(DRR)를 연동한 **교육
 
 - [전신 초음파 팬텀 확장·프로브 설정·실측 장기 자료와 검증](docs/ULTRASOUND_EXPANSION.ko.md)
 - [초음파 사용성 자체 점검·탭 조작·장기 강조와 남은 한계](docs/ULTRASOUND_USABILITY.ko.md)
+- [실측 갑상선 3단계 단면 연습·판정 근거·후속 검증 조건](docs/THYROID_PRACTICE.ko.md)
 
 - **3단면 CT 뷰어**: Axial / Coronal / Sagittal, 슬라이더로 단면 이동
 - **3D 골격 표면**: Marching Cubes(HU>300) 위에 X-ray 빔 시각화
