@@ -13,6 +13,8 @@ export interface ProbeSettings {
   lateral: number; height: number; rotation: number; tilt: number; rock: number;
   depth: number; frequency: number; gain: number; tgc: number;
   probe: 'curved' | 'linear';
+  contact?: {point:Vec3;inward:Vec3};
+  lifted?: boolean;
 }
 export interface ProbeGeometry { origin: Vec3; inward: Vec3; across: Vec3; normal: Vec3; contact: boolean }
 export interface UsFrame {
@@ -61,12 +63,24 @@ export function probeGeometry(v: UsVolume, s: ProbeSettings): ProbeGeometry {
       if((sample(v,[x,yp,z])??-1000)>-350) {y=yp;contact=true;break;}
     }
   }
-  let inward:Vec3=[0,-1,0],across:Vec3=[-1,0,0];
+  let origin:Vec3=[x,y,z],inward:Vec3=[0,-1,0],across:Vec3=[-1,0,0];
+  if(s.contact) {
+    const length=Math.hypot(...s.contact.inward);
+    inward=length>1e-6?s.contact.inward.map(n=>n/length) as Vec3:[0,-1,0];
+    const tangent=cross(inward,Math.abs(inward[2])<.95?[0,0,1]:[0,1,0]),norm=Math.hypot(...tangent);
+    across=tangent.map(n=>n/norm) as Vec3;
+    origin=s.contact.point;contact=false;
+    for(let d=0;d<=Math.max(...v.spacing)*3+2;d+=.5) {
+      const p=add(s.contact.point,inward,d);
+      if((sample(v,p)??-1000)>-350){origin=p;contact=true;break;}
+    }
+  }
+  if(s.lifted){contact=false;origin=add(origin,inward,-25);}
   across=rotate(across,inward,rad(s.rotation));
   let normal=cross(inward,across);
   inward=rotate(inward,across,rad(s.tilt));normal=rotate(normal,across,rad(s.tilt));
   inward=rotate(inward,normal,rad(s.rock));across=rotate(across,normal,rad(s.rock));
-  return {origin:[x,y,z],inward,across,normal,contact};
+  return {origin,inward,across,normal,contact};
 }
 export function rayPoint(g: ProbeGeometry, s: ProbeSettings, line: number, depth: number): Vec3 {
   if(s.probe==='linear')return add(add(g.origin,g.across,(line-.5)*50),g.inward,depth);

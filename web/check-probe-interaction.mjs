@@ -1,0 +1,61 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+const browser=await chromium.launch({channel:'chrome'});
+const page=await browser.newPage({viewport:{width:1440,height:960},hasTouch:true});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const image=page.locator('canvas[aria-label="초음파 단면 영상"]'),scene=page.locator('.us-scene-canvas');
+const ready=()=>page.waitForFunction(()=>document.querySelector('canvas[aria-label="초음파 단면 영상"]')?.dataset.ready==='true'&&document.querySelector('.us-image-area')?.getAttribute('aria-busy')==='false',{},{timeout:90000});
+const pose=async()=>JSON.parse(await image.getAttribute('data-pose'));
+const mode=name=>page.getByRole('group',{name:'탐촉자 손동작'}).getByRole('button',{name,exact:true}).click();
+const drag=async(x,y,dx,dy)=>{await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+dx,y+dy,{steps:8});await page.mouse.up();await ready();};
+try {
+  await page.goto(process.env.TEST_URL||'http://127.0.0.1:4190');
+  await page.getByRole('button',{name:'초음파 촬영 연습',exact:true}).click();await ready();
+  const r=await scene.boundingBox(),x=r.x+r.width*.5,y=r.y+r.height*.42;
+  await page.mouse.move(x,y);await page.mouse.down();await ready();
+  await image.evaluate(c=>{
+    globalThis.probeFrames=[];
+    globalThis.probeObserver=new MutationObserver(()=>globalThis.probeFrames.push(c.dataset.pose));
+    globalThis.probeObserver.observe(c,{attributes:true,attributeFilter:['data-pose']});
+  });
+  const before=await pose();
+  for(let step=1;step<=12;step++){await page.mouse.move(x+step,y+step);await page.waitForTimeout(35);}
+  const liveFrames=await page.evaluate(()=>new Set(globalThis.probeFrames).size);
+  assert.ok(liveFrames>=2,'Image must update while the pointer remains held');
+  await page.mouse.up();await ready();await page.evaluate(()=>globalThis.probeObserver.disconnect());
+  assert.notDeepEqual((await pose()).contact.point,before.contact.point);
+  assert.ok((await pose()).contact.inward[1]<0,'Front skin must point inward');
+  const slide=await image.evaluate(c=>c.toDataURL());
+  await mode('회전');await drag(x,y,80,0);assert.equal((await pose()).rotation,40);
+  assert.notEqual(await image.evaluate(c=>c.toDataURL()),slide);
+  await mode('앞뒤 기울임');await drag(x,y,0,-40);assert.equal((await pose()).tilt,12);
+  await mode('좌우 기울임');await drag(x,y,40,0);assert.equal((await pose()).rock,12);
+  await mode('밀기');await drag(x,y,-r.width*.45,-70);
+  assert.equal((await pose()).lifted,true);assert.equal(Number(await image.getAttribute('data-coverage')),0);
+  await scene.click({position:{x:r.width*.5,y:r.height*.42}});await ready();
+  assert.equal((await pose()).lifted,false);assert.ok(Number(await image.getAttribute('data-coverage'))>0);
+  const front=await pose();
+  await mode('화면 회전');await drag(x,y,Math.PI/.007,0);assert.deepEqual(await pose(),front);
+  await mode('밀기');await scene.click({position:{x:r.width*.5,y:r.height*.42}});await ready();
+  assert.ok((await pose()).contact.inward[1]>0,'Back skin must scan inward from the back');
+  await page.getByRole('button',{name:'탐촉자 확대',exact:true}).click();
+  await scene.click({position:{x:r.width*.5,y:r.height*.5}});await ready();
+  assert.ok((await pose()).contact.inward[1]>0,'Probe focus must preserve the back camera view');
+  await page.screenshot({path:'/tmp/xray-probe-back-contact.png'});
+  await page.getByRole('button',{name:'영상 정지',exact:true}).click();const frozen=await pose();
+  await drag(x,y,20,15);assert.deepEqual(await pose(),frozen);
+  assert.equal(await page.getByRole('group',{name:'탐촉자 손동작'}).getByRole('button',{name:'밀기',exact:true}).isDisabled(),true);
+  await page.getByRole('button',{name:'재생',exact:true}).click();await ready();
+  await page.getByRole('button',{name:'전신 보기',exact:true}).click();
+  const cdp=await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});await ready();const touch=await pose();
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+8,y:y+15}]});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await ready();
+  assert.notDeepEqual((await pose()).contact.point,touch.contact.point);
+  await page.getByRole('button',{name:'자세·영상 설정 초기화',exact:true}).click();await ready();
+  const reset=await pose();assert.equal(reset.contact,undefined);assert.equal(reset.lifted,undefined);assert.equal(reset.rotation,0);assert.equal(reset.tilt,0);assert.equal(reset.rock,0);
+  assert.deepEqual(errors,[]);
+  await page.screenshot({path:'/tmp/xray-probe-controls.png'});
+  console.log(JSON.stringify({passed:true,liveFrames,errors,checks:['continuous skin slide and live frames','axis rotation','tilt','rock','lift and recontact','camera independent of probe','posterior skin normal','freeze locks direct input','touch slide','reset clears surface pose']}));
+}finally{await browser.close();}

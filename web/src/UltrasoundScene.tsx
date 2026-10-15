@@ -10,11 +10,15 @@ import vtkPolyData from '@kitware/vtk.js/Common/DataModel/PolyData';
 import vtkCellPicker from '@kitware/vtk.js/Rendering/Core/CellPicker';
 import {add,probeGeometry,rayPoint,type ProbeSettings,type UsVolume,type Vec3} from './ultrasound';
 
-export default function UltrasoundScene({volume,settings,onContact}: {
-  volume:UsVolume;settings:ProbeSettings;onContact:(x:number,z:number)=>void;
+type Manipulation='slide'|'rotate'|'tilt'|'rock'|'camera';
+const MODES:[Manipulation,string][]=[['slide','밀기'],['rotate','회전'],['tilt','앞뒤 기울임'],['rock','좌우 기울임'],['camera','화면 회전']];
+export default function UltrasoundScene({volume,settings,onChange,frozen}: {
+  volume:UsVolume;settings:ProbeSettings;onChange:(patch:Partial<ProbeSettings>)=>void;frozen:boolean;
 }) {
   const host=useRef<HTMLDivElement>(null),update=useRef<(s:ProbeSettings)=>void>(()=>{});
-  const reset=useRef<()=>void>(()=>{}),callback=useRef(onContact);callback.current=onContact;
+  const reset=useRef<()=>void>(()=>{}),callback=useRef(onChange);callback.current=onChange;
+  const [mode,setMode]=useState<Manipulation>('slide');
+  const interaction=useRef({mode,settings,frozen});interaction.current={mode,settings,frozen};
   const focus=useRef<()=>void>(()=>{}),skinOpacity=useRef<(inside:boolean)=>void>(()=>{});
   const [inside,setInside]=useState(false);
   useEffect(()=>{
@@ -67,10 +71,10 @@ export default function UltrasoundScene({volume,settings,onContact}: {
       camera.setPosition(c[0]+span*4*Math.sin(yaw)*Math.cos(pitch),c[1]+span*4*Math.cos(yaw)*Math.cos(pitch),c[2]+span*4*Math.sin(pitch));camera.setViewUp(0,0,1);camera.setParallelScale(scale);renderer.resetCameraClippingRange();grw.getRenderWindow().render();
     };
     reset.current=()=>{yaw=.15;pitch=.04;scale=span*.56;panX=panZ=0;draw();};
-    focus.current=()=>{scale=Math.min(span*.56,170);panX=probeOrigin[0]-center[0];panZ=probeOrigin[2]-center[2];yaw=.15;pitch=.04;draw();};
+    focus.current=()=>{scale=Math.min(span*.56,170);panX=probeOrigin[0]-center[0];panZ=probeOrigin[2]-center[2];draw();};
     skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
     update.current=s=>{
-      const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);probe.actor.setVisibility(g.contact);edges.actor.setVisibility(g.contact);marker.actor.setVisibility(g.contact);
+      const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);probe.actor.setVisibility(g.contact||!!s.lifted);edges.actor.setVisibility(g.contact);marker.actor.setVisibility(g.contact||!!s.lifted);
       const pts:Vec3[]=s.probe==='linear'?[rayPoint(g,s,0,0),rayPoint(g,s,1,0),rayPoint(g,s,1,s.depth),rayPoint(g,s,0,s.depth)]:[g.origin,...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
       const triangles:number[]=[];
       if(s.probe==='linear')triangles.push(3,0,1,2,3,0,2,3);else for(let i=1;i<41;i++)triangles.push(3,0,i,i+1);
@@ -83,26 +87,71 @@ export default function UltrasoundScene({volume,settings,onContact}: {
       setMesh(probe.poly,box(-14,s.probe==='linear'?27:17,6,13),faces);
       setMesh(marker.poly,box(-27,3,6.5,1).map(p=>add(p,g.across,-13)),faces);draw();
     };
-    let drag:{x:number;y:number;ox:number;oy:number;max:number;pan:boolean}|null=null;
-    const down=(e:PointerEvent)=>{element.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,ox:e.clientX,oy:e.clientY,max:0,pan:e.shiftKey||e.button!==0};};
-    const move=(e:PointerEvent)=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.max=Math.max(drag.max,Math.hypot(e.clientX-drag.ox,e.clientY-drag.oy));drag.x=e.clientX;drag.y=e.clientY;if(drag.pan){panX-=dx*scale/element.clientHeight*2;panZ+=dy*scale/element.clientHeight*2;}else{yaw-=dx*.007;pitch=Math.max(-1.1,Math.min(1.1,pitch+dy*.005));}draw();};
-    const up=(e:PointerEvent)=>{
-      if(drag&&!drag.pan&&drag.max<5&&e.type==='pointerup'){
-        const r=element.getBoundingClientRect(),size=grw.getApiSpecificRenderWindow().getSize();picker.pick([(e.clientX-r.left)*size[0]/r.width,(r.bottom-e.clientY)*size[1]/r.height,0],renderer);
-        if(picker.getCellId()>=0){const p=picker.getPickPosition();callback.current(Math.max(0,Math.min(100,(p[0]-volume.origin[0])/((volume.dims[0]-1)*volume.spacing[0])*100)),Math.max(0,Math.min(100,(p[2]-volume.origin[2])/((volume.dims[2]-1)*volume.spacing[2])*100)));}
+    const pick=(x:number,y:number)=>{
+      if(interaction.current.frozen)return;
+      const r=element.getBoundingClientRect(),size=grw.getApiSpecificRenderWindow().getSize();
+      if(x<r.left||x>r.right||y<r.top||y>r.bottom){callback.current({lifted:true});return;}
+      picker.pick([(x-r.left)*size[0]/r.width,(r.bottom-y)*size[1]/r.height,0],renderer);
+      const cell=picker.getCellId();
+      if(cell<0){if(!interaction.current.settings.lifted)callback.current({lifted:true});return;}
+      const mapper=skin.getMapper();if(!mapper)return;
+      const data=mapper.getInputData() as ReturnType<typeof vtkPolyData.newInstance>,points=data.getPoints().getData(),cells=data.getPolys().getData();
+      const a=cells[cell*4+1]*3,b=cells[cell*4+2]*3,c=cells[cell*4+3]*3;
+      const u=[points[b]-points[a],points[b+1]-points[a+1],points[b+2]-points[a+2]],v=[points[c]-points[a],points[c+1]-points[a+1],points[c+2]-points[a+2]];
+      const normal:Vec3=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],length=Math.hypot(...normal);
+      if(!Number.isFinite(length)||length<1e-8)return;
+      const p=[...picker.getPickPosition()] as Vec3,camera=renderer.getActiveCamera().getPosition();
+      const sign=normal.reduce((sum,n,i)=>sum+n*(camera[i]-p[i]),0)>0?-1:1;
+      callback.current({lateral:Math.max(0,Math.min(100,(p[0]-volume.origin[0])/((volume.dims[0]-1)*volume.spacing[0])*100)),height:Math.max(0,Math.min(100,(p[2]-volume.origin[2])/((volume.dims[2]-1)*volume.spacing[2])*100)),contact:{point:p,inward:normal.map(n=>n/length*sign) as Vec3},lifted:false});
+    };
+    let drag:{id:number;x:number;y:number;ox:number;oy:number;mode:Manipulation;pan:boolean;settings:ProbeSettings}|null=null;
+    let pending:{x:number;y:number}|null=null,animation=0;
+    const flush=()=>{animation=0;if(pending){const p=pending;pending=null;pick(p.x,p.y);}};
+    const down=(e:PointerEvent)=>{
+      if(drag)return;
+      const selected=e.shiftKey||e.button!==0?'camera':interaction.current.mode;
+      if(interaction.current.frozen&&selected!=='camera')return;
+      e.preventDefault();element.setPointerCapture(e.pointerId);
+      drag={id:e.pointerId,x:e.clientX,y:e.clientY,ox:e.clientX,oy:e.clientY,mode:selected,pan:e.button===1||e.altKey,settings:interaction.current.settings};
+      if(selected==='slide')pick(e.clientX,e.clientY);
+    };
+    const move=(e:PointerEvent)=>{
+      if(!drag||drag.id!==e.pointerId)return;
+      const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;
+      if(drag.mode==='camera'){
+        if(drag.pan){panX-=dx*scale/element.clientHeight*2;panZ+=dy*scale/element.clientHeight*2;}
+        else{yaw-=dx*.007;pitch=Math.max(-1.1,Math.min(1.1,pitch+dy*.005));}draw();return;
       }
-      drag=null;
+      if(interaction.current.frozen)return;
+      if(drag.mode==='slide'){pending={x:e.clientX,y:e.clientY};if(!animation)animation=requestAnimationFrame(flush);return;}
+      const totalX=e.clientX-drag.ox,totalY=e.clientY-drag.oy;
+      if(drag.mode==='rotate')callback.current({rotation:((drag.settings.rotation+totalX*.5+180)%360+360)%360-180});
+      if(drag.mode==='tilt')callback.current({tilt:Math.max(-35,Math.min(35,drag.settings.tilt-totalY*.3))});
+      if(drag.mode==='rock')callback.current({rock:Math.max(-35,Math.min(35,drag.settings.rock+totalX*.3))});
+    };
+    const up=(e:PointerEvent)=>{
+      if(!drag||drag.id!==e.pointerId)return;
+      cancelAnimationFrame(animation);animation=0;
+      if(e.type==='pointerup'&&drag.mode==='slide')pick(e.clientX,e.clientY);
+      pending=null;drag=null;
     };
     const wheel=(e:WheelEvent)=>{e.preventDefault();scale=Math.max(Math.min(span*.2,70),Math.min(span*2,scale*Math.exp(Math.max(-100,Math.min(100,e.deltaY))*.0015)));draw();};
     const context=(e:Event)=>e.preventDefault();
     element.addEventListener('pointerdown',down);element.addEventListener('pointermove',move);element.addEventListener('pointerup',up);element.addEventListener('pointercancel',up);element.addEventListener('lostpointercapture',up);element.addEventListener('wheel',wheel,{passive:false});element.addEventListener('contextmenu',context);
     const observer=new ResizeObserver(()=>{grw.resize();draw();});observer.observe(element);grw.resize();draw();
     return()=>{
-      disposed=true;observer.disconnect();element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);element.removeEventListener('wheel',wheel);element.removeEventListener('contextmenu',context);
+      disposed=true;cancelAnimationFrame(animation);observer.disconnect();element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);element.removeEventListener('wheel',wheel);element.removeEventListener('contextmenu',context);
       update.current=()=>{};reset.current=()=>{};focus.current=()=>{};skinOpacity.current=()=>{};grw.delete();owned.reverse().forEach(o=>o.delete());
     };
   },[volume]);
   useEffect(()=>update.current(settings),[volume,settings]);
   useEffect(()=>skinOpacity.current(inside),[volume,inside]);
-  return <div className="us-scene"><div ref={host} className="us-scene-canvas" aria-label="3D 인체와 초음파 탐촉자"/><div className="us-scene-actions"><button onClick={()=>reset.current()}>{volume.kind==='anatomy'?'전신 보기':'시점 복귀'}</button><button onClick={()=>focus.current()}>탐촉자 확대</button>{volume.kind!=='phantom'&&<button className={inside?'active':''} onClick={()=>setInside(s=>!s)}>{inside?'피부 보기':'내부 장기 보기'}</button>}</div><div className="us-scene-caption">{volume.kind==='anatomy'?'BodyParts3D 실제 인체 형상 · 교육용 재료 팬텀':volume.kind==='human'?'실제 복부 CT 형상 · 앞면 접촉':'실측 시험 팬텀 · 인체 아님'}<br/>클릭: 앞면 위치 선택 · 드래그: 회전 · 휠: 확대</div></div>;
+  return <div className="us-scene">
+    <div className="us-scene-viewport">
+      <div ref={host} className="us-scene-canvas" data-manipulation={mode} aria-label="3D 인체와 초음파 탐촉자"/>
+      <div className="us-scene-actions"><button onClick={()=>reset.current()}>{volume.kind==='anatomy'?'전신 보기':'시점 복귀'}</button><button onClick={()=>focus.current()}>탐촉자 확대</button>{volume.kind!=='phantom'&&<button className={inside?'active':''} onClick={()=>setInside(s=>!s)}>{inside?'피부 보기':'내부 장기 보기'}</button>}</div>
+    </div>
+    <div className="us-hand-modes" role="group" aria-label="탐촉자 손동작">{MODES.map(([id,title])=><button key={id} aria-pressed={mode===id} disabled={frozen&&id!=='camera'} onClick={()=>setMode(id)}>{title}</button>)}</div>
+    <div className="us-scene-caption">{mode==='slide'?'피부를 누른 채 밀어 이동 · 몸 밖으로 빼면 접촉 해제':mode==='rotate'?'좌우 드래그: 탐촉자 축 회전':mode==='tilt'?'상하 드래그: 앞뒤로 기울이기':mode==='rock'?'좌우 드래그: 좌우로 기울이기':'드래그: 시점 회전 · Alt 드래그: 화면 이동'}<br/>Shift 또는 우클릭 드래그: 화면 회전 · 휠: 확대</div>
+  </div>;
 }

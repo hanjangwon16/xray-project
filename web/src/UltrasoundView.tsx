@@ -17,6 +17,7 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld}:
   const [reference,setReference]=useState(false);
   const [frozen,setFrozen]=useState(false),[overlay,setOverlay]=useState(false),[hover,setHover]=useState(''),[target,setTarget]=useState('간');
   const worker=useRef<Worker|null>(null),request=useRef(0),canvas=useRef<HTMLCanvasElement>(null);
+  const submit=useRef<(pose:ProbeSettings)=>void>(()=>{});
   useEffect(()=>{
     const abort=new AbortController();let disposed=false;
     setVolume(null);setFrame(null);setError('');setBusy(true);setFrozen(false);setHover('');setReference(false);
@@ -44,26 +45,32 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld}:
       }
       if(disposed)return;
       const w=new Worker(new URL('./ultrasound.worker.ts',import.meta.url),{type:'module'});worker.current=w;
-      w.onmessage=e=>{
-        if(disposed||e.data.requestId!==request.current)return;
-        setBusy(false);
-        if(e.data.type==='error'){setError(e.data.message);return;}
-        setFrame(e.data);setError('');
+      let rendering=false,pending:ProbeSettings|null=null;
+      const send=(pose:ProbeSettings)=>{
+        setBusy(true);
+        if(rendering){pending=pose;return;}
+        rendering=true;w.postMessage({type:'render',requestId:++request.current,settings:pose});
       };
-      w.onerror=()=>{if(!disposed){setBusy(false);setError('초음파 계산에 실패했습니다. 다시 불러오세요.');}};
+      submit.current=send;
+      w.onmessage=e=>{
+        if(disposed||worker.current!==w)return;
+        rendering=false;
+        if(e.data.type==='error'){pending=null;setBusy(false);setError(e.data.message);return;}
+        setFrame(e.data);setError('');
+        if(pending){const next=pending;pending=null;send(next);}else setBusy(false);
+      };
+      w.onerror=()=>{if(!disposed){rendering=false;pending=null;w.terminate();worker.current=null;submit.current=()=>{};setBusy(false);setError('초음파 계산에 실패했습니다. 다시 불러오세요.');}};
       w.postMessage({type:'init',volume:{...v,skinPoints:undefined}});
       const organId=source==='anatomy'&&initialOrgan===5?2:initialOrgan;
       setVolume(v);setTarget(source!=='phantom'?(initialWorld&&source==='human'?'CT 선택 위치':ORGAN_NAMES[organId]??'선택 장기'):'시험 팬텀');
       const initialPosition=initialWorld&&source==='human'?{lateral:Math.max(5,Math.min(95,(initialWorld[0]-v.origin[0])/((v.dims[0]-1)*v.spacing[0])*100)),height:Math.max(5,Math.min(95,(initialWorld[2]-v.origin[2])/((v.dims[2]-1)*v.spacing[2])*100))}:organPosition(v,organId);
       setSettings({...DEFAULT_PROBE,...(source!=='phantom'?initialPosition:{depth:50,height:50})});
     })().catch(e=>{if(!disposed){setBusy(false);setError(e.message);}});
-    return()=>{disposed=true;abort.abort();worker.current?.terminate();worker.current=null;request.current++;};
+    return()=>{disposed=true;abort.abort();worker.current?.terminate();worker.current=null;submit.current=()=>{};request.current++;};
   },[source,retry]);
   useEffect(()=>{
     if(!volume||frozen||!worker.current)return;
-    const id=++request.current;setBusy(true);
-    const timer=window.setTimeout(()=>worker.current?.postMessage({type:'render',requestId:id,settings}),60);
-    return()=>window.clearTimeout(timer);
+    submit.current(settings);
   },[volume,settings,frozen]);
   useEffect(()=>{
     if(!frame||!canvas.current)return;
@@ -78,9 +85,12 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld}:
     for(let tick=1;tick<=5;tick++){const y=Math.min(c.height-4,tick/5*c.height);ctx.fillText((frame.settings.depth/10*tick/5).toFixed(1),c.width-10,y);ctx.beginPath();ctx.moveTo(c.width-7,y-3);ctx.lineTo(c.width-2,y-3);ctx.stroke();}
   },[frame,overlay,reference]);
   const changeSource=(next:'human'|'phantom'|'anatomy')=>{if(next===source||frozen)return;request.current++;setVolume(null);setFrame(null);setBusy(true);setSource(next);};
-  const change=(patch:Partial<ProbeSettings>)=>{if(!frozen){setSettings(s=>({...s,...patch}));setHover('');}};
+  const change=(patch:Partial<ProbeSettings>)=>{if(!frozen){
+    if(patch.lateral!==undefined||patch.height!==undefined){if(!patch.contact)patch={...patch,contact:undefined,lifted:false};setTarget('자유 스캔');}
+    setSettings(s=>({...s,...patch}));setHover('');
+  }};
   const reset=()=>{setFrozen(false);setSettings({...DEFAULT_PROBE,...(volume&&volume.kind!=='phantom'?organPosition(volume,volume.kind==='anatomy'?2:initialOrgan):{depth:50,height:50})});setTarget(volume?.kind==='anatomy'?'오른쪽 신장':volume?.kind==='human'?ORGAN_NAMES[initialOrgan]:'시험 팬텀');};
-  const slider=(key:keyof ProbeSettings,title:string,min:number,max:number,step:number,unit:string)=>
+  const slider=(key:keyof Omit<ProbeSettings,'contact'|'lifted'>,title:string,min:number,max:number,step:number,unit:string)=>
     <label className="us-slider" key={key}><span>{title}<output>{Number(settings[key]).toFixed(step<1?1:0)}{unit}</output></span><input aria-label={title} type="range" min={min} max={max} step={step} value={settings[key]} disabled={frozen||!volume} onChange={e=>change({[key]:+e.target.value})}/></label>;
   const geometry=volume?probeGeometry(volume,settings):null;
   const openCase=(mode:'ct'|'xray')=>{
@@ -95,7 +105,7 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld}:
       {source==='anatomy'&&<p className="us-muted">실제 피부 메시 · 내부 재료 4mm 근사. 신장·비장·위·뼈를 구분하며 나머지는 일반 연부조직입니다.</p>}
       <div className="us-control-section"><h3>01 <span>탐색 위치</span></h3>
       {source!=='phantom'&&<div className="us-organ-presets">{(source==='anatomy'?[2,3,1,6]:[5,2,3,1]).map(id=><button disabled={frozen||!volume} className={target===ORGAN_NAMES[id]?'active':''} key={id} onClick={()=>{const p=volume&&organPosition(volume,id);if(p){change({...p,rotation:0,tilt:0,rock:0});setTarget(ORGAN_NAMES[id]);}}}>{ORGAN_NAMES[id]}</button>)}</div>}
-      {slider('lateral','좌우 위치',5,95,.5,'%')}{slider('height','상하 위치',5,95,.5,'%')}
+      {slider('lateral','좌우 위치',0,100,.5,'%')}{slider('height','상하 위치',0,100,.5,'%')}
       </div><div className="us-control-section"><h3>02 <span>탐촉자 방향</span></h3>
       <div className="us-source-tabs"><button disabled={frozen||!volume} className={settings.rotation===0?'active':''} onClick={()=>change({rotation:0,tilt:0,rock:0})}>가로 스캔</button><button disabled={frozen||!volume} className={settings.rotation===90?'active':''} onClick={()=>change({rotation:90,tilt:0,rock:0})}>세로 스캔</button></div>
       {slider('rotation','탐촉자 회전',-180,180,1,'°')}{slider('tilt','앞뒤 기울임',-35,35,1,'°')}{slider('rock','좌우 기울임',-35,35,1,'°')}
@@ -106,10 +116,10 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld}:
       </div><button className="us-reset" onClick={reset}>자세·영상 설정 초기화</button>
     </aside>
     <main className="us-main">
-      <div className="us-session-heading"><div><span className="us-eyebrow">{source==='anatomy'?'HUMAN ANATOMICAL PHANTOM':source==='human'?'CT → ACOUSTIC APPROXIMATION':'MEASURED 3D ULTRASOUND'}</span><h2>{source==='anatomy'?'인체 위에서 탐촉자를 움직이세요':source==='human'?'복부에서 스캔면 찾기':'실측 초음파 볼륨 탐색'}</h2></div><span className={'us-live '+(frozen?'paused':'')}>{frozen?'Ⅱ 정지':'● LIVE'}</span></div>
+      <div className="us-session-heading"><div><span className="us-eyebrow">{source==='anatomy'?'HUMAN ANATOMICAL PHANTOM':source==='human'?'CT → ACOUSTIC APPROXIMATION':'MEASURED 3D ULTRASOUND'}</span><h2>{source==='anatomy'?'인체 위에서 탐촉자를 움직이세요':source==='human'?'복부에서 스캔면 찾기':'실측 초음파 볼륨 탐색'}</h2></div><span role="status" className={'us-live '+(frozen||!geometry?.contact?'paused':'')}>{frozen?'Ⅱ 정지':geometry?.contact?'● 접촉 · LIVE':'접촉 해제'}</span></div>
       <div className="us-viewports">
         <article className="us-panel"><div className="us-panel-heading"><span>01 / {source==='anatomy'?'실제 인체 형상':source==='human'?'실제 CT 기반 인체':'시험용 초음파 팬텀'}</span><span>3D + SCAN PLANE</span></div>
-          {volume?<UltrasoundScene volume={volume} settings={settings} onContact={(x,z)=>change({lateral:x,height:z})}/>:<div className="us-loading" role="status">{error?'데이터를 불러오지 못했습니다.':'3D 구조와 영상을 준비하고 있습니다…'}</div>}
+          {volume?<UltrasoundScene volume={volume} settings={settings} onChange={change} frozen={frozen}/>:<div className="us-loading" role="status">{error?'데이터를 불러오지 못했습니다.':'3D 구조와 영상을 준비하고 있습니다…'}</div>}
           <div className="us-key"><span><i style={{background:'#6fe0cb'}}/>스캔면</span><span><i style={{background:'#fbc842'}}/>탐촉자 marker = 영상 왼쪽</span></div>
         </article>
         <article className="us-panel"><div className="us-panel-heading"><span>02 / {reference?'동일면 CT':'B-MODE'}</span><span>{source!=='phantom'?(reference?'실제 CT · 사위 재단면':'합성 · 교육용 근사'):'실측 볼륨 · 재단면'}</span></div>
@@ -122,7 +132,7 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld}:
             }} onPointerLeave={()=>setHover('')}/>
             <span className="us-image-marker">◀</span><span className="us-image-info">{settings.probe==='curved'?'C':'L'} {source!=='phantom'?settings.frequency.toFixed(1)+'MHz':'3DUS'}<br/>{(settings.depth/10).toFixed(1)}cm · G {settings.gain}dB</span>
             {busy&&<span className="us-calculating" role="status">{frame?'영상 갱신 중…':'첫 단면 계산 중…'}</span>}
-            {volume&&geometry&&!geometry.contact&&<span className="us-empty">체표를 찾을 수 없습니다. 위치를 몸 안쪽으로 옮기세요.</span>}
+            {volume&&geometry&&!geometry.contact&&<span className="us-empty">{settings.lifted?'탐촉자가 떨어져 있습니다. 피부 위로 끌어 접촉하세요.':'체표를 찾을 수 없습니다. 위치를 몸 안쪽으로 옮기세요.'}</span>}
           </div>
           <div className="us-image-controls"><button className={frozen?'active':''} disabled={!frame||busy} onClick={()=>setFrozen(s=>!s)}>{frozen?'재생':'영상 정지'}</button>{source==='human'&&<button className={reference?'active':''} disabled={!frame} onClick={()=>setReference(s=>!s)}>{reference?'B-mode 보기':'같은 면 CT 비교'}</button>}<label><input type="checkbox" checked={overlay} disabled={source==='phantom'} onChange={e=>setOverlay(e.target.checked)}/> 구조 해설색</label><span>{frame?`${frame.ms.toFixed(0)}ms · 범위 ${(frame.coverage*100).toFixed(0)}%`:''}</span></div>
           <div className="us-readout">{hover||(overlay?'색은 해부 분할 기반 해설이며 초음파 원신호가 아닙니다.':'영상 위에 마우스를 올려 같은 위치의 구조를 확인하세요.')}</div>

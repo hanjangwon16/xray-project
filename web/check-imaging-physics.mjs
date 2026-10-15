@@ -9,6 +9,14 @@ const close=(a,b,tol=1e-7)=>assert.ok(Math.abs(a-b)<tol,`${a} vs ${b}`);
 const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
 const v={data:new Int16Array(100*80*70),labels:null,dims:[100,80,70],spacing:[1,1,1],origin:[-50,-40,-35],kind:'human'};
 const s={...DEFAULT_PROBE,depth:60};
+for(const inward of [[1,0,0],[0,1,0],[0,0,-1]]) {
+  const surface=probeGeometry(v,{...s,contact:{point:[0,0,0],inward}});
+  assert.equal(surface.contact,true);surface.inward.forEach((n,i)=>close(n,inward[i]));
+  close(dot(surface.inward,surface.across),0);close(dot(surface.normal,surface.across),0);
+}
+const outside={...s,contact:{point:[-500,0,0],inward:[1,0,0]}};
+assert.equal(probeGeometry(v,outside).contact,false);
+const lifted=renderUltrasound(v,{...s,lifted:true},64);assert.equal(lifted.coverage,0);assert.ok(lifted.pixels.every(n=>n===0));
 for(const rotation of [-180,-30,0,90,180])for(const tilt of [-35,0,35])for(const rock of [-35,0,35]) {
   const pose=probeGeometry(v,{...s,rotation,tilt,rock});
   for(const axis of [pose.inward,pose.across,pose.normal])close(dot(axis,axis),1);

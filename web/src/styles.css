@@ -132,13 +132,20 @@ button:disabled,input:disabled,select:disabled{opacity:.4;cursor:not-allowed;}
 .us-panel{border:1px solid var(--us-border);border-radius:12px;overflow:hidden;background:#101c25;display:flex;flex-direction:column;min-height:0;min-width:0;}
 .us-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid #233640;color:#b8cbd2;font-size:10px;letter-spacing:.5px;flex-shrink:0;}
 .us-panel-heading span:last-child{font-size:9px;color:#6c9197;text-align:right;}
-.us-scene{position:relative;flex:1;min-height:0;}
+.us-scene{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;}
+.us-scene-viewport{position:relative;flex:1;min-height:60px;}
 .us-scene-canvas{position:absolute;inset:0;touch-action:none;cursor:grab;}
 .us-camera-reset{position:absolute;right:10px;top:10px;font-size:10px;padding:6px 9px;background:#10232cdd;}
 .us-scene-actions{position:absolute;right:10px;top:10px;left:10px;display:flex;justify-content:flex-end;gap:5px;flex-wrap:wrap;}
 .us-scene-actions button{font-size:10px;padding:6px 9px;background:#10232cdd;}
+.us-hand-modes{display:flex;gap:4px;flex-wrap:wrap;padding:5px 10px;flex-shrink:0;}
+.us-hand-modes button{font-size:11px;padding:7px 10px;background:#10232cee;}
+.us-hand-modes button[aria-pressed=true]{background:#245a52;border-color:#6fe0cb;color:#effffb;}
+.us-scene-canvas[data-manipulation=slide]{cursor:crosshair;}
+.us-scene-canvas[data-manipulation=rotate],.us-scene-canvas[data-manipulation=rock]{cursor:ew-resize;}
+.us-scene-canvas[data-manipulation=tilt]{cursor:ns-resize;}
 .us-datasets{flex-direction:column;}
-.us-scene-caption{position:absolute;bottom:14px;left:14px;right:12px;color:#9db7be;font-size:10px;line-height:1.8;pointer-events:none;text-shadow:0 1px 4px #000;}
+.us-scene-caption{padding:3px 10px 8px;color:#9db7be;font-size:10px;line-height:1.8;pointer-events:none;text-shadow:0 1px 4px #000;flex-shrink:0;}
 .us-key{display:flex;flex-wrap:wrap;gap:12px;padding:10px 14px;border-top:1px solid #22343d;font-size:10px;color:#adc4cc;flex-shrink:0;}
 .us-key span{display:flex;gap:5px;align-items:center;}
 .us-key i{width:6px;height:6px;border-radius:2px;}
