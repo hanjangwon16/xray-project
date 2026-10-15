@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import AtlasView from './AtlasView';
+import UltrasoundView from './UltrasoundView';
+import ImagingLibrary from './ImagingLibrary';
+import type {Vec3} from './ultrasound';
 import { loadCase, type Volume } from './volume';
 import { buildImageData, buildLabelData, createSliceView, createVolumeView, setSlicePosition, updateBeam, updateCrosshair, setSliceWindow, updateSlicePlanes, type SliceView, type VolumeView } from './vtkSetup';
 import { computeBeam } from './beam';
@@ -19,7 +22,11 @@ const PRESETS: Preset[] = [
 ];
 
 export default function App() {
-  const [workspace,setWorkspace] = useState<'atlas'|'case'>('atlas');
+  const [workspace,setWorkspace] = useState<'atlas'|'case'|'ultrasound'|'library'>('atlas');
+  const pendingFocus=useRef<Vec3|null>(null);
+  const [usInitial,setUsInitial]=useState<{organ:number;world?:Vec3}>({organ:2});
+  const [caseError,setCaseError]=useState('');
+  const [caseRetry,setCaseRetry]=useState(0);
   const [activePlane,setActivePlane] = useState<ViewName>('axial');
   const [mode,setMode] = useState<'ct'|'xray'>('ct');
   const [selectedOrgan,setSelectedOrgan] = useState('');
@@ -60,17 +67,20 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    setVol(null); setDrrUrl(null);
+    setVol(null); setDrrUrl(null);setCaseError('');
+    const abort=new AbortController();
     // clear previous views
     for (const el of [axialRef.current, coronalRef.current, sagittalRef.current, volRef.current]) {
       if (el) el.innerHTML = '';
     }
     viewsRef.current = null; volViewRef.current = null;
     workerRef.current?.terminate();
-    loadCase(caseId).then((v) => {
+    loadCase(caseId,abort.signal).then((v) => {
       if (cancelled) return;
       setVol(v);
-      setSlices({axial: Math.floor(v.meta.dims[2]/2),coronal:Math.floor(v.meta.dims[1]/2),sagittal:Math.floor(v.meta.dims[0]/2)});
+      const p=pendingFocus.current;pendingFocus.current=null;
+      const ijk=p?p.map((x,i)=>Math.max(0,Math.min(v.meta.dims[i]-1,Math.round((x-v.meta.origin[i])/v.meta.spacing[i])))):v.meta.dims.map(n=>Math.floor(n/2));
+      setSlices({axial:ijk[2],coronal:ijk[1],sagittal:ijk[0]});
       const imageData = buildImageData(v);
       const labelData = buildLabelData(v);
       viewsRef.current = {
@@ -105,12 +115,12 @@ export default function App() {
         setDrrMs(d.ms);
       };
       workerRef.current = w;
-    });
-    return () => { cancelled = true; workerRef.current?.terminate();
+    }).catch(e=>{if(!cancelled)setCaseError(e.message);});
+    return () => { cancelled = true;abort.abort();workerRef.current?.terminate();
       if (viewsRef.current) Object.values(viewsRef.current).forEach(v => v.grw.delete());
       volViewRef.current?.grw.delete();
     };
-  }, [caseId]);
+  }, [caseId,caseRetry]);
 
   // re-render tint when toggled (worker holds last result; just re-request)
   useEffect(() => {
@@ -195,16 +205,24 @@ export default function App() {
     <div className="app">
       <header>
         <h1>X-ray <span className="accent">Anatomy Lab</span></h1>
-        <span className="sub">CT 단면 · 3D 구조 · 가상 X-ray 연동 학습 시뮬레이터</span>
-        <select className="winsel" value={caseId} onChange={(e) => setCaseId(e.target.value)}>{CASES.map((cs) => <option key={cs.id} value={cs.id}>{cs.name}</option>)}</select><span className="badge">교육용 · 비진단</span>
+        <span className="sub">해부 아틀라스 · CT · X-ray · 초음파 촬영 학습</span>
+        <select aria-label="CT 사례" className="winsel" value={caseId} disabled={workspace!=='case'} onChange={(e) => setCaseId(e.target.value)}>{CASES.map((cs) => <option key={cs.id} value={cs.id}>{cs.name}</option>)}</select><span className="badge">교육용 · 비진단</span>
       </header>
-      <nav className="top-workspaces"><button className={workspace==='atlas'?'active':''} onClick={()=>setWorkspace('atlas')}>전신 · 계통별 탐색</button><button className={workspace==='case'?'active':''} onClick={()=>setWorkspace('case')}>실제 CT · X-ray 사례</button></nav>
-      {workspace==='atlas' && <AtlasView/>}
+      <nav className="top-workspaces" aria-label="학습 작업 공간"><button className={workspace==='atlas'?'active':''} onClick={()=>setWorkspace('atlas')}>전신 · 계통별 탐색</button><button className={workspace==='case'?'active':''} onClick={()=>setWorkspace('case')}>실제 CT · X-ray 사례</button><button className={workspace==='ultrasound'?'active':''} onClick={()=>setWorkspace('ultrasound')}>초음파 촬영 연습</button><button className={workspace==='library'?'active':''} onClick={()=>setWorkspace('library')}>실제 영상 자료</button></nav>
+      {workspace==='atlas' && <AtlasView onUltrasound={id=>{setUsInitial({organ:id});setWorkspace('ultrasound');}}/>}
+      {workspace==='ultrasound' && <UltrasoundView initialOrgan={usInitial.organ} initialWorld={usInitial.world} onOpenCase={(nextMode,p)=>{
+        if(caseId==='example_ct'&&vol){const ijk=p.map((x,i)=>Math.max(0,Math.min(vol.meta.dims[i]-1,Math.round((x-vol.meta.origin[i])/vol.meta.spacing[i]))));setSlices({sagittal:ijk[0],coronal:ijk[1],axial:ijk[2]});}
+        else {pendingFocus.current=p;setCaseId('example_ct');}
+        setSelectedOrgan('초음파 빔 중앙 위치');setMode(nextMode);setActivePlane('axial');setShowBeam(nextMode==='xray');setWorkspace('case');
+      }}/>}
+      {workspace==='library' && <ImagingLibrary/>}
       <div style={{display:workspace==='case'?'contents':'none'}}>
+      {caseError&&<div role="alert" className="us-error">{caseError}<button onClick={()=>setCaseRetry(n=>n+1)}>CT 다시 불러오기</button></div>}
       <div className="guide">① 복부 3D에서 장기 위치 확인 → ② CT 슬라이더로 절단 위치 이동 → ③ 같은 높이의 단면 비교 · X-ray는 여러 구조가 겹친 투영 영상입니다.</div>
       <nav className="workspace-nav">
         <button className={mode==='ct'?'active':''} onClick={()=>setMode('ct')}>CT 단면 학습</button>
         <button className={mode==='xray'?'active':''} onClick={()=>setMode('xray')}>X-ray 촬영 방향</button>
+        <button disabled={!vol} onClick={()=>{if(vol){setUsInitial({organ:5,world:[vol.meta.origin[0]+slices.sagittal*vol.meta.spacing[0],vol.meta.origin[1]+slices.coronal*vol.meta.spacing[1],vol.meta.origin[2]+slices.axial*vol.meta.spacing[2]]});setWorkspace('ultrasound');}}}>같은 높이 초음파 연습 ↗</button>
         {(['axial','coronal','sagittal'] as ViewName[]).map((v,i)=><button className={activePlane===v?'active':''} key={v} onClick={()=>{setActivePlane(v);setMode('ct');}}>{['가로','앞뒤','좌우'][i]} 단면</button>)}
         <span>부위: {selectedOrgan || '상복부'} · {vol?.meta.dims[2]}개 CT 단면</span>
       </nav>
@@ -282,7 +300,7 @@ export default function App() {
       </main>
       </div>
       <footer>
-        <span>데이터: TotalSegmentator CT·full task fast 3mm labelmap (CC BY 4.0) · DRR: Beer–Lambert 근사</span>
+        <span>{workspace==='ultrasound'?'인체: BodyParts3D · 복부 CT: 음향 근사 · 시험 팬텀: PLUS 실측 3DUS':workspace==='library'?'실제 영상 표본: FracAtlas · BUS-BRA · 사례별 출처·이용 고지 확인':'데이터: BodyParts3D · TotalSegmentator CT · DRR: Beer–Lambert 근사'}</span>
         <span className="right">교육용 시뮬레이션 — 진단·치료 목적 아님</span>
       </footer>
     </div>

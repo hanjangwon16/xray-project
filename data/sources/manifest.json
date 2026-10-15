@@ -1,0 +1,129 @@
+{
+  "retrieved_at": "2026-10-15T04:49:25Z",
+  "assets": [
+    {
+      "id": "busbra",
+      "url": "https://zenodo.org/api/records/8231412/files/BUSBRA.zip/content",
+      "name": "BUSBRA.zip",
+      "md5": "1f8b2be6476d58fc97bfb5e5a1ea9bab",
+      "bytes": 133917740,
+      "license": "CC-BY-4.0",
+      "source": "https://zenodo.org/records/8231412",
+      "path": "data/sources/busbra/BUSBRA.zip",
+      "actual_bytes": 133917740,
+      "sha256": "ba3e6ed19cc37c682d8d39e25435bbf8a555a12cb7e641b5f2117685c95580ff",
+      "verified_md5": "1f8b2be6476d58fc97bfb5e5a1ea9bab",
+      "status": "downloaded"
+    },
+    {
+      "id": "fracatlas",
+      "url": "https://ndownloader.figshare.com/files/65518038",
+      "name": "FracAtlas.zip",
+      "md5": "fe9da2c7c285915ebee69dfdab8fd396",
+      "bytes": 338436460,
+      "license": "CC-BY-4.0",
+      "source": "https://figshare.com/articles/dataset/22363012",
+      "path": "data/sources/fracatlas/FracAtlas.zip",
+      "actual_bytes": 338436460,
+      "sha256": "b67ec2d290a022b3dcf47f78e9a37f7edcc80592c0571f439355bf00bd9f0e23",
+      "verified_md5": "fe9da2c7c285915ebee69dfdab8fd396",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/LICENSE",
+      "name": "LICENSE",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/LICENSE",
+      "actual_bytes": 1512,
+      "sha256": "0d54a3399774afc5ddf816c6cd4f70c91e97d9a8ee45c4f740066efc7e48052c",
+      "verified_md5": "9df6200599de94c06d9363bdbb868796",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/ConfigFiles/PlusDeviceSet_Server_SimulatedUltrasound_3DSlicer.xml",
+      "name": "ConfigFiles/PlusDeviceSet_Server_SimulatedUltrasound_3DSlicer.xml",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/ConfigFiles/PlusDeviceSet_Server_SimulatedUltrasound_3DSlicer.xml",
+      "actual_bytes": 9907,
+      "sha256": "16c6d752015962a15dbd9ff38675a3d75ffb6c7f8c4c7520cf44142467fa273f",
+      "verified_md5": "f7f311b40764d794b97200cdf5138c19",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/ConfigFiles/SimulatedUltrasound_Scene.mrb",
+      "name": "ConfigFiles/SimulatedUltrasound_Scene.mrb",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/ConfigFiles/SimulatedUltrasound_Scene.mrb",
+      "actual_bytes": 1769836,
+      "sha256": "a0c674c1a4dfa024c679994758bcbc06a38e6750f9f86b11e31d0638876c25d3",
+      "verified_md5": "ba1ba1a1451171871e3f2aa5065ab608",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/ConfigFiles/SimulatedUltrasound_GelBlockModel_Reference.stl",
+      "name": "ConfigFiles/SimulatedUltrasound_GelBlockModel_Reference.stl",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/ConfigFiles/SimulatedUltrasound_GelBlockModel_Reference.stl",
+      "actual_bytes": 684,
+      "sha256": "5fbddc6de5121275608d24ff68be160e725355865925c3bbf360a8d6ce9cfdda",
+      "verified_md5": "22b14bd79c152c8307f0724f48be4198",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/ConfigFiles/SimulatedUltrasound_VesselModel_Reference.stl",
+      "name": "ConfigFiles/SimulatedUltrasound_VesselModel_Reference.stl",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/ConfigFiles/SimulatedUltrasound_VesselModel_Reference.stl",
+      "actual_bytes": 4684,
+      "sha256": "4b72c205b78723812332825ce645e5c9303fa7f8e88b5b04bcf48afb9e0445e5",
+      "verified_md5": "f82f1e32a6b8b224721a9497b68f771e",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/ConfigFiles/SimulatedUltrasound_NeedleModel_NeedleTip.stl",
+      "name": "ConfigFiles/SimulatedUltrasound_NeedleModel_NeedleTip.stl",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/ConfigFiles/SimulatedUltrasound_NeedleModel_NeedleTip.stl",
+      "actual_bytes": 6984,
+      "sha256": "7483ac260e9a17eb8395b20f5ff82fd7926f0060e9cc51ed59c2eea50d83fffc",
+      "verified_md5": "4cb3a753ce7c22b168e9f14bd6a27118",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/TestImages/SpinePhantomFreehand.igs.mha",
+      "name": "TestImages/SpinePhantomFreehand.igs.mha",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/TestImages/SpinePhantomFreehand.igs.mha",
+      "actual_bytes": 3481178,
+      "sha256": "55b500e987a2053a69df93ae08d109981df2ff8865d7b8e50643c9d6559205c0",
+      "verified_md5": "c76f4a748e0b1e1405bf3be3042f00b3",
+      "status": "downloaded"
+    },
+    {
+      "id": "pluslibdata",
+      "url": "https://raw.githubusercontent.com/PlusToolkit/PlusLibData/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/TestImages/SpinePhantomFreehandReconstructed.mha",
+      "name": "TestImages/SpinePhantomFreehandReconstructed.mha",
+      "license": "see bundled LICENSE",
+      "source": "https://github.com/PlusToolkit/PlusLibData/tree/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc",
+      "path": "data/sources/pluslibdata/TestImages/SpinePhantomFreehandReconstructed.mha",
+      "actual_bytes": 354215,
+      "sha256": "7cec583252e961d2d3847828f3a6ad80001ca3808f7f23cc20a8b2f68d26bf32",
+      "verified_md5": "cdf3dc0353910e673dd80ad54a020083",
+      "status": "downloaded"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "pymust",
+    "path": "data/sources/pymust/source.zip",
+    "url": "https://codeload.github.com/creatis-ULTIM/PyMUST/zip/a96be54f19eb1471fe610221d11f7886b4ddd272",
+    "commit": "a96be54f19eb1471fe610221d11f7886b4ddd272",
+    "license": "LGPL-2.1",
+    "bytes": 13148707,
+    "sha256": "eb7f02bfad90af1b1f9e071a20fea37300d9f0d7bee1bb2033e7cfe11a83ec8c",
+    "status": "downloaded"
+  },
+  {
+    "id": "i4h",
+    "path": "data/sources/i4h/source.zip",
+    "url": "https://codeload.github.com/isaac-for-healthcare/i4h-sensor-simulation/zip/b279b512318b7f385e4eb44d15163e898efe7bce",
+    "commit": "b279b512318b7f385e4eb44d15163e898efe7bce",
+    "license": "Apache-2.0",
+    "bytes": 7596949,
+    "sha256": "d81b7650630f8360385ec31fff100740da95a14bb94472aae38cc3120c8f5d6e",
+    "status": "downloaded"
+  }
+]

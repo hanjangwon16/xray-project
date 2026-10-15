@@ -17,7 +17,7 @@ function rotAxis(p: [number, number, number], ax: [number, number, number], a: n
 const cross = (a: number[], b: number[]): [number, number, number] => [
   a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0],
 ];
-const norm = (a: number[]): [number, number, number] => {
+export const norm = (a: number[]): [number, number, number] => {
   const l = Math.hypot(a[0], a[1], a[2]) || 1;
   return [a[0] / l, a[1] / l, a[2] / l];
 };

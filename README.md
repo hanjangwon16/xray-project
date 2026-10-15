@@ -3,6 +3,8 @@
 CT 단면 + 3D 해부 구조 + 각도별 가상 X-ray(DRR)를 연동한 **교육용** 웹 앱.
 방사선 촬영 각도 감각과 해부학 위치·형태를 함께 익히는 것이 목적입니다.
 
+전신 해부 아틀라스, 실제 인체 형상의 초음파 팬텀, 복부 CT 기반 음향 근사, 실측 3DUS 팬텀과 실제 X-ray/초음파 자료를 제공합니다. [구현 범위·데이터·검증·후속 작업 지시서](docs/SIMULATOR_IMPLEMENTATION.ko.md)를 확인하세요.
+
 ## 기능
 
 - **3단면 CT 뷰어**: Axial / Coronal / Sagittal, 슬라이더로 단면 이동
@@ -41,7 +43,7 @@ python scripts/prepare_case.py <input.nii.gz> web/public/cases/<case_id>
 
 `web/dist`는 순수 정적 파일입니다. 그대로 정적 호스팅에 올리면 됩니다.
 
-- GitHub Pages: `npm run build` 후 `dist`를 `gh-pages` 브랜치에 push
+- GitHub Pages: main push 시 `.github/workflows/deploy.yml`이 빌드·배포
 - Netlify/Vercel: 빌드 명령 `cd web && npm run build`, 출력 `web/dist`
 
 ## 면책

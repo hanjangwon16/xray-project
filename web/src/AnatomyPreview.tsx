@@ -3,7 +3,7 @@ import {loadCase,type Volume} from './volume';
 import type {DrrRequest,DrrResponse} from './types';
 
 export type AnatomySelection={name:string;labelId?:number;region:string};
-export default function AnatomyPreview({selection,onClose}:{selection:AnatomySelection;onClose:()=>void}){
+export default function AnatomyPreview({selection,onClose,onUltrasound}:{selection:AnatomySelection;onClose:()=>void;onUltrasound?:(id:number)=>void}){
  const [vol,setVol]=useState<Volume|null>(null),[error,setError]=useState('');
  const [mode,setMode]=useState<'ct'|'xray'>('ct'),[slice,setSlice]=useState(15),[angle,setAngle]=useState(0);
  const [busy,setBusy]=useState(false);const canvas=useRef<HTMLCanvasElement>(null),worker=useRef<Worker|null>(null),serial=useRef(0);
@@ -28,7 +28,7 @@ export default function AnatomyPreview({selection,onClose}:{selection:AnatomySel
  <p>{mode==='ct'?'가로 단면 · 위=앞 / 화면 왼쪽=환자 오른쪽':'상복부 전체 가상 투영 · 선택 장기만의 영상이 아닙니다'}</p>
  <div className="preview-image"><canvas ref={canvas}/>{(!vol||busy)&&<span role="status">{busy?'X-ray 계산 중…':'CT 불러오는 중…'}</span>}</div>
  {mode==='ct'?<label>CT 단면 {slice+1} / {vol?.meta.dims[2] ?? '…'}<input aria-label="미리보기 CT 위치" type="range" min={0} max={(vol?.meta.dims[2]??1)-1} value={slice} onChange={e=>setSlice(+e.target.value)}/></label>:<div className="preview-tabs">{[[0,'PA'],[180,'AP'],[90,'측면'],[45,'사위']].map(([v,n])=><button key={v} className={angle===v?'active':''} onClick={()=>setAngle(Number(v))}>{n}</button>)}</div>}
- {selection.labelId&&mode==='ct'&&<p>선택 장기가 포함된 사례 단면으로 이동했습니다. 슬라이더로 위아래를 비교하세요.</p>}</>:<><p>이 부위의 CT·X-ray 사례가 아직 없습니다.</p><p>지원 부위: 상복부 · 간, 신장, 비장, 위. 다른 부위 영상을 대신 표시하지 않습니다.</p></>}
+ {selection.labelId&&mode==='ct'&&<p>선택 장기가 포함된 사례 단면으로 이동했습니다. 슬라이더로 위아래를 비교하세요.</p>}{selection.labelId&&onUltrasound&&<button onClick={()=>onUltrasound(selection.labelId!)}>이 장기 초음파 연습 ↗</button>}</>:<><p>이 부위의 CT·X-ray 사례가 아직 없습니다.</p><p>지원 부위: 상복부 · 간, 신장, 비장, 위. 다른 부위 영상을 대신 표시하지 않습니다.</p></>}
  {error&&<p role="alert">{error}</p>}
  </aside>;
 }

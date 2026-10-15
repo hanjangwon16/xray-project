@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';
-const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1440,height:900}});
+const b=await chromium.launch({channel:'chrome'}); const p=await b.newPage({viewport:{width:1440,height:900}});
 const errors=[];p.on('pageerror',e=>errors.push(e.message));
 await p.goto(process.env.TEST_URL || 'http://127.0.0.1:4190');
 // switch to case workspace

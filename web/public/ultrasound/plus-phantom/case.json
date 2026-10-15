@@ -1,0 +1,37 @@
+{
+  "id": "plus-phantom",
+  "title": "PLUS 척추 팬텀 · 실측 3D 초음파",
+  "dims": [
+    147,
+    106,
+    104
+  ],
+  "spacing": [
+    0.5,
+    0.5,
+    0.5
+  ],
+  "origin": [
+    -74.5217,
+    165.573,
+    29.072
+  ],
+  "direction": [
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "coordinateSystem": "PLUS phantom native physical coordinates; not patient RAS",
+  "dtype": "uint8",
+  "file": "volume_u8.bin",
+  "sha256": "63ea77330019273c513bc3a7a46c6c12390703cfb40d6d663f98f2a47315e33d",
+  "source": "https://github.com/PlusToolkit/PlusLibData/blob/51dcbb76d9f29fad94cf80788a7a0b7c704fb5dc/TestImages/SpinePhantomFreehandReconstructed.mha",
+  "license": "BSD-3-Clause",
+  "changes": "Lossless MHA decompression, native x-fastest voxel order retained"
+}

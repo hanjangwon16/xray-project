@@ -1,0 +1,57 @@
+{
+  "id": "bodyparts3d-acoustic-phantom",
+  "title": "실제 해부 메시 기반 전신 인체 팬텀",
+  "sourceKind": "anatomical_material_phantom",
+  "source": "BodyParts3D / DBCLS 4.0",
+  "sourceUrl": "https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html",
+  "dims": [
+    173,
+    79,
+    436
+  ],
+  "spacing": [
+    4.0,
+    4.0,
+    4.0
+  ],
+  "origin": [
+    -344.0,
+    -56.0,
+    -88.0
+  ],
+  "direction": [
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1
+  ],
+  "coordinateTransform": "Native mesh coordinates -> patient RAS by (-x,-y,z); kidney laterality checked",
+  "file": "materials.mesh",
+  "skin": "skin.mesh",
+  "skinVertices": 610146,
+  "sha256": "3e79f178641e9b196268ae61c609500e42fb28fe5bdb5a98e0bb5df955933b0b",
+  "materials": {
+    "0": "air",
+    "10": "generic soft tissue",
+    "11": "bone",
+    "1": "spleen",
+    "2": "right kidney",
+    "3": "left kidney",
+    "6": "stomach"
+  },
+  "limitations": "4mm material voxels, no acquired HU or ultrasound. No complete liver/lung/vessels/muscle differentiation. No deformation.",
+  "counts": {
+    "0": 4792444,
+    "1": 2248,
+    "2": 2327,
+    "3": 2263,
+    "6": 10602,
+    "10": 987240,
+    "11": 161688
+  }
+}

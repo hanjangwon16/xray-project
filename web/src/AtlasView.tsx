@@ -17,7 +17,7 @@ type Quiz={target:string;en:string;found:boolean};
 
 const ORGAN_MAP:[RegExp,string,number][]=[[/liver/i,'간',5],[/right kidney/i,'우신장',2],[/left kidney/i,'좌신장',3],[/spleen/i,'비장',1],[/stomach/i,'위',6]];
 
-export default function AtlasView(){
+export default function AtlasView({onUltrasound}:{onUltrasound?:(id:number)=>void}){
  const [selection,setSelection]=useState<AnatomySelection|null>(null);
  const host=useRef<HTMLDivElement>(null);
  const actors=useRef<Partial<Record<System,ReturnType<typeof vtkActor.newInstance>>>>({});
@@ -47,7 +47,7 @@ export default function AtlasView(){
    const entry=catalogs.current[group]?.find(c=>c.id===id),src=polys.current[group];if(!entry||!src)return;
    const points=src.getPoints().getData() as Float32Array,sub=points.slice(entry.start*9,entry.end*9),pd=vtkPolyData.newInstance();pd.getPoints().setData(sub,3);
    const cells=new Uint32Array(sub.length/9*4);for(let i=0,j=0;i<sub.length/9;i++,j+=4){cells[j]=3;cells[j+1]=i*3;cells[j+2]=i*3+1;cells[j+3]=i*3+2;}pd.getPolys().setData(cells);
-   if(!highlight.current){const m=vtkMapper.newInstance(),a=vtkActor.newInstance();a.setMapper(m);a.getProperty().setColor(1,.9,.1);a.getProperty().setOpacity(.95);a.getProperty().setAmbient(.5);renderer.addActor(a);highlight.current=a;}
+   if(!highlight.current){const m=vtkMapper.newInstance(),a=vtkActor.newInstance();a.setMapper(m);a.setPickable(false);a.getProperty().setColor(1,.9,.1);a.getProperty().setOpacity(.95);a.getProperty().setAmbient(.5);renderer.addActor(a);highlight.current=a;}
    (highlight.current.getMapper() as ReturnType<typeof vtkMapper.newInstance>).setInputData(pd);highlight.current.setVisibility(true);draw();
   };
   focusRef.current=focusStructure;
@@ -75,7 +75,7 @@ export default function AtlasView(){
      const organ=entry?ORGAN_MAP.find(([re])=>re.test(entry.name)):undefined;
      const organSel=organ?{name:organ[1],labelId:organ[2]}:null;
      setSelection({name:organSel?.name??entry?.ko??name,labelId:organSel?.labelId,region:organSel?'upper-abdomen':'unsupported'});
-     if(quiz && !quiz.found && entry && entry.name===quiz.en) setQuiz({...quiz,found:true});
+     if(entry) setQuiz(current=>current&&!current.found&&entry.name===current.en?{...current,found:true}:current);
      if(group && entry) focusStructure(entry.id,group);
     }else{setSelection(null);setPickedName('');if(highlight.current)highlight.current.setVisibility(false);}
     draw();
@@ -116,6 +116,7 @@ export default function AtlasView(){
   const all=Object.values(catalogs.current).flat();
   const pool=all.filter(e=>e.triangles!==undefined&&e.name.length>3);
   const pick=pool[Math.floor(Math.random()*pool.length)];
+  if(!pick)return;
   setQuiz({target:pick.ko,en:pick.name,found:false});setEnabled([pick.group]);
  };
 
@@ -136,6 +137,6 @@ export default function AtlasView(){
   <p className="atlas-note">표준 해부 모델이며 복부 CT 사례와는 다른 인체입니다. 신경 모드는 현재 뇌·두부 구조 중심이고 전신 말초신경은 포함하지 않습니다.</p>
   <a href="./atlas/ATTRIBUTION.txt" target="_blank" rel="noreferrer">데이터 출처·라이선스</a></aside>
   <div className="atlas-scene"><div className="atlas-camera"><button onClick={()=>reset.current('front')}>정면</button><button onClick={()=>reset.current('back')}>후면</button><button onClick={()=>reset.current('side')}>측면</button><button onClick={()=>reset.current()}>전체 맞춤</button></div><div ref={host} className="atlas-canvas"/><div className="atlas-status" role="status">{status} · 선택 {enabled.length}/5</div></div>
-  {selection&&<AnatomyPreview selection={selection} onClose={()=>setSelection(null)}/>}
+  {selection&&<AnatomyPreview selection={selection} onClose={()=>setSelection(null)} onUltrasound={onUltrasound}/>}
  </section>;
 }
