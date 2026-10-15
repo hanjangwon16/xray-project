@@ -40,9 +40,14 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld,i
         const response=await fetch('./ultrasound/segthy/case.json',{signal:abort.signal});if(!response.ok)throw Error('실측 인체 초음파 정보를 불러오지 못했습니다.');
         const meta=await response.json();
         const read=async(file:string)=>{const r=await fetch('./ultrasound/segthy/'+file,{signal:abort.signal});if(!r.ok)throw Error('실측 인체 초음파 파일을 불러오지 못했습니다.');return new Uint8Array(await new Response(r.body!.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());};
-        const [data,labels]=await Promise.all([read(meta.file),read(meta.labels)]);
+        const [data,labels,surfaceData]=await Promise.all([read(meta.file),read(meta.labels),read(meta.surfaceFile)]);
         if(data.length!==meta.dims.reduce((a:number,b:number)=>a*b,1)||labels.length!==data.length)throw Error('실측 영상과 분할 크기가 일치하지 않습니다.');
-        v={data,labels,dims:meta.dims,spacing:meta.spacing,origin:meta.origin,kind:'acquired'};
+        const surfaces=meta.surfaces.map((entry:{id:number;vertices:number;triangles:number;offset:number;bytes:number})=>{
+          if(entry.offset<0||entry.bytes!==entry.vertices*24+entry.triangles*16||entry.offset+entry.bytes>surfaceData.byteLength)throw Error('3D 표면 데이터 크기가 일치하지 않습니다.');
+          const points=new Float32Array(surfaceData.buffer,entry.offset,entry.vertices*3),normals=new Float32Array(surfaceData.buffer,entry.offset+entry.vertices*12,entry.vertices*3),polys=new Uint32Array(surfaceData.buffer,entry.offset+entry.vertices*24,entry.triangles*4);
+          return {id:entry.id,points,normals,polys};
+        });
+        v={data,labels,dims:meta.dims,spacing:meta.spacing,origin:meta.origin,kind:'acquired',surfaces};
       } else {
         const response=await fetch('./ultrasound/plus-phantom/case.json',{signal:abort.signal});if(!response.ok)throw Error('팬텀 정보를 불러오지 못했습니다.');
         const meta=await response.json();
@@ -68,7 +73,7 @@ export default function UltrasoundView({onOpenCase,initialOrgan=2,initialWorld,i
         if(pending){const next=pending;pending=null;send(next);}else setBusy(false);
       };
       w.onerror=()=>{if(!disposed){rendering=false;pending=null;w.terminate();worker.current=null;submit.current=()=>{};setBusy(false);setError('초음파 계산에 실패했습니다. 다시 불러오세요.');}};
-      w.postMessage({type:'init',volume:{...v,skinPoints:undefined}});
+      w.postMessage({type:'init',volume:{...v,skinPoints:undefined,surfaces:undefined}});
       const organId=source==='anatomy'&&initialOrgan===5?2:initialOrgan;
       setVolume(v);setTarget(source==='acquired'?'갑상선 · 왼쪽 엽':source!=='phantom'?(initialWorld&&source==='human'?'CT 선택 위치':ORGAN_NAMES[organId]??'선택 장기'):'시험 팬텀');
       const initialPosition=initialWorld&&source==='human'?{lateral:Math.max(5,Math.min(95,(initialWorld[0]-v.origin[0])/((v.dims[0]-1)*v.spacing[0])*100)),height:Math.max(5,Math.min(95,(initialWorld[2]-v.origin[2])/((v.dims[2]-1)*v.spacing[2])*100))}:organPosition(v,organId);

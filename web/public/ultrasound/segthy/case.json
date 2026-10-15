@@ -38,6 +38,45 @@
     "volume.bin": "7b74826efc3e07a09d36e3af657fac0798c2c297625d49690fb9cf48c63c735c",
     "labels.bin": "17b764775ae1126d024d09f5658a943379c196ac6ebda52c215f088d1a24bbb6"
   },
+  "surfaceFile": "surfaces.bin.mesh",
+  "surfaces": [
+    {
+      "id": 0,
+      "vertices": 397,
+      "triangles": 790,
+      "offset": 0,
+      "bytes": 22168
+    },
+    {
+      "id": 1,
+      "vertices": 4334,
+      "triangles": 8664,
+      "offset": 22168,
+      "volumeRatio": 0.9830513851721429,
+      "maxBoundsChangeMm": 0.7124373164293765,
+      "bytes": 242640
+    },
+    {
+      "id": 2,
+      "vertices": 2170,
+      "triangles": 4336,
+      "offset": 264808,
+      "volumeRatio": 0.9732653784975374,
+      "maxBoundsChangeMm": 0.502050404956865,
+      "bytes": 121456
+    },
+    {
+      "id": 3,
+      "vertices": 2910,
+      "triangles": 5816,
+      "offset": 386264,
+      "volumeRatio": 0.9752714108998872,
+      "maxBoundsChangeMm": 0.45854369479482315,
+      "bytes": 162896
+    }
+  ],
+  "surfaceSha256": "27ebbf7f2bf0da492039d2f9d6970e0bc4964732c1cad3d1d5a2d18ec28dff5c",
+  "surfaceChanges": "Display only: 0.72mm grid, Gaussian sigma 0.504mm, four volume-constrained Laplacian passes. Capture support uses a convex hull for picking, not anatomical skin. Original signal and label voxels unchanged.",
   "changes": "Every second original voxel retained in each axis, spacing doubled, local origin. No generated acoustic texture.",
   "source": "https://www.campar.in.tum.de/public_datasets/2022_plosone_eilers/US_data.zip",
   "sourceAssets": [

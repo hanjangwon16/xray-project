@@ -7,6 +7,9 @@ import struct
 import urllib.request
 import zipfile
 import numpy as np
+from scipy.ndimage import gaussian_filter
+from skimage.measure import marching_cubes
+import trimesh
 
 URL = 'https://www.campar.in.tum.de/public_datasets/2022_plosone_eilers/US_data.zip'
 
@@ -84,12 +87,42 @@ if __name__ == '__main__':
         assets[filename] = hashlib.sha256(raw).hexdigest()
     spacing = list(struct.unpack_from('<3f', header, 80))
     dims = list(image[::2, ::2, ::2].shape[::-1])
+    surfaces, chunks, offset = [], [], 0
+    coarse_spacing = np.array(spacing[::-1])*6
+    for label in [0, 1, 2, 3]:
+        occupancy = (image[::6, ::6, ::6]>0) if label == 0 else (mask[::6, ::6, ::6] == label)
+        field = gaussian_filter(np.pad(occupancy.astype(np.float32), 2), .7)
+        vertices, faces, _, _ = marching_cubes(field, .5, spacing=coarse_spacing)
+        vertices = (vertices-coarse_spacing*2)[:, ::-1]
+        mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
+        mesh.fix_normals()
+        trimesh.smoothing.filter_laplacian(mesh, lamb=.3, iterations=4, volume_constraint=True)
+        if label == 0:
+            mesh = mesh.convex_hull
+        entry: dict[str, int | float] = {'id': label, 'vertices': len(mesh.vertices), 'triangles': len(mesh.faces), 'offset': offset}
+        if label:
+            source_points = np.argwhere(mask == label)[:, ::-1]*np.array(spacing)
+            bbox_error = float(np.max(np.abs(mesh.bounds-np.array([source_points.min(axis=0), source_points.max(axis=0)]))))
+            ratio = float(abs(mesh.volume)/(len(source_points)*np.prod(spacing)))
+            assert .95 < ratio < 1.05, (label, ratio)
+            assert bbox_error < 1, (label, bbox_error)
+            entry.update(volumeRatio=ratio, maxBoundsChangeMm=bbox_error)
+        polygons = np.column_stack([np.full(len(mesh.faces), 3), mesh.faces]).astype('<u4')
+        chunk = mesh.vertices.astype('<f4').tobytes()+mesh.vertex_normals.astype('<f4').tobytes()+polygons.tobytes()
+        chunks.append(chunk)
+        entry['bytes'] = len(chunk)
+        offset += len(chunk)
+        surfaces.append(entry)
+    surface_raw = b''.join(chunks)
+    (output/'surfaces.bin.mesh').write_bytes(gzip.compress(surface_raw, mtime=0))
     metadata = {'id': 'segthy-001-left', 'dims': dims, 'spacing': [x*2 for x in spacing], 'origin': [0, 0, 0],
                 'coordinateSystem': 'Native reconstruction voxel axes in mm, local origin; not registered to the whole-body atlas',
                 'nativeSform': list(struct.unpack_from('<12f', header, 280)),
                 'nativeQformCode': struct.unpack_from('<h', header, 252)[0],
                 'nativeSformCode': struct.unpack_from('<h', header, 254)[0],
                 'file': 'volume.bin.mesh', 'labels': 'labels.bin.mesh', 'sha256': assets,
+                'surfaceFile': 'surfaces.bin.mesh', 'surfaces': surfaces, 'surfaceSha256': hashlib.sha256(surface_raw).hexdigest(),
+                'surfaceChanges': 'Display only: 0.72mm grid, Gaussian sigma 0.504mm, four volume-constrained Laplacian passes. Capture support uses a convex hull for picking, not anatomical skin. Original signal and label voxels unchanged.',
                 'changes': 'Every second original voxel retained in each axis, spacing doubled, local origin. No generated acoustic texture.',
                 'source': URL, 'sourceAssets': records, 'license': 'CC BY, version unspecified by original publisher; commercial use explicitly permitted',
                 'labelMap': {'1': '갑상선 · 왼쪽 엽', '2': '혈관 분할 #2', '3': '혈관 분할 #3'}, 'originalDims': list(image.shape[::-1])}

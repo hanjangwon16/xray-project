@@ -63,6 +63,18 @@ const anatomy={data:Int16Array.from(labels,id=>id===0?-1000:id===11?1000:20),lab
 assert.equal(renderUltrasound(anatomy,DEFAULT_PROBE,64).reference,null,'Anatomical materials must not be presented as acquired CT');
 const usFolder=new URL('./public/ultrasound/segthy/',import.meta.url),usMeta=JSON.parse(readFileSync(new URL('case.json',usFolder),'utf8'));
 const acquired={data:new Uint8Array(gunzipSync(readFileSync(new URL(usMeta.file,usFolder)))),labels:new Uint8Array(gunzipSync(readFileSync(new URL(usMeta.labels,usFolder)))),dims:usMeta.dims,spacing:usMeta.spacing,origin:usMeta.origin,kind:'acquired'};
+const surfaces=gunzipSync(readFileSync(new URL(usMeta.surfaceFile,usFolder)));
+assert.equal(createHash('sha256').update(surfaces).digest('hex'),usMeta.surfaceSha256);
+for(const surface of usMeta.surfaces){
+  assert.equal(surface.bytes,surface.vertices*24+surface.triangles*16);
+  assert.ok(surface.offset+surface.bytes<=surfaces.length);
+  if(surface.id){assert.ok(surface.volumeRatio>.95&&surface.volumeRatio<1.05);assert.ok(surface.maxBoundsChangeMm<1);assert.ok(surface.triangles<12000);}
+  const raw=surfaces.buffer.slice(surfaces.byteOffset+surface.offset,surfaces.byteOffset+surface.offset+surface.bytes);
+  const points=new Float32Array(raw,0,surface.vertices*3),normals=new Float32Array(raw,surface.vertices*12,surface.vertices*3),polys=new Uint32Array(raw,surface.vertices*24,surface.triangles*4);
+  assert.ok(points.every(Number.isFinite));
+  for(let i=0;i<normals.length;i+=3)close(Math.hypot(normals[i],normals[i+1],normals[i+2]),1,1e-5);
+  for(let i=0;i<polys.length;i+=4){assert.equal(polys[i],3);for(let j=1;j<=3;j++)assert.ok(polys[i+j]<surface.vertices);}
+}
 for(const [file,data] of [['volume.bin',acquired.data],['labels.bin',acquired.labels]])assert.equal(createHash('sha256').update(data).digest('hex'),usMeta.sha256[file]);
 let xSum=0,zSum=0,count=0;acquired.labels.forEach((id,i)=>{if(id===1){xSum+=i%usMeta.dims[0];zSum+=Math.floor(i/(usMeta.dims[0]*usMeta.dims[1]));count++;}});
 assert.ok(count>1000);

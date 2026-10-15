@@ -8,6 +8,7 @@ export interface UsVolume {
   origin: Vec3;
   kind: 'human' | 'phantom' | 'anatomy' | 'acquired';
   skinPoints?: Float32Array;
+  surfaces?: {id:number;points:Float32Array;normals:Float32Array;polys:Uint32Array}[];
 }
 export interface ProbeSettings {
   lateral: number; height: number; rotation: number; tilt: number; rock: number;
@@ -37,15 +38,16 @@ export function voxelPoint(v: UsVolume, world: Vec3): Vec3 {
   return world.map((p,i) => (p-v.origin[i])/v.spacing[i]) as Vec3;
 }
 export function sample(v: UsVolume, point: Vec3): number | null {
-  const [x,y,z] = voxelPoint(v,point), [nx,ny,nz] = v.dims;
+  return sampleVoxel(v,(point[0]-v.origin[0])/v.spacing[0],(point[1]-v.origin[1])/v.spacing[1],(point[2]-v.origin[2])/v.spacing[2]);
+}
+function sampleVoxel(v:UsVolume,x:number,y:number,z:number):number|null {
+  const [nx,ny,nz]=v.dims;
   if (x<0 || y<0 || z<0 || x>nx-1 || y>ny-1 || z>nz-1) return null;
   const i=Math.floor(x),j=Math.floor(y),k=Math.floor(z),fx=x-i,fy=y-j,fz=z-k;
-  let out=0;
-  for(let dz=0;dz<2;dz++) for(let dy=0;dy<2;dy++) for(let dx=0;dx<2;dx++) {
-    const idx=Math.min(i+dx,nx-1)+Math.min(j+dy,ny-1)*nx+Math.min(k+dz,nz-1)*nx*ny;
-    out+=v.data[idx]*(dx?fx:1-fx)*(dy?fy:1-fy)*(dz?fz:1-fz);
-  }
-  return out;
+  const a=i+j*nx+k*nx*ny,dx=i<nx-1?1:0,dy=j<ny-1?nx:0,dz=k<nz-1?nx*ny:0,data=v.data;
+  const front=(data[a]*(1-fx)+data[a+dx]*fx)*(1-fy)+(data[a+dy]*(1-fx)+data[a+dy+dx]*fx)*fy;
+  const back=(data[a+dz]*(1-fx)+data[a+dz+dx]*fx)*(1-fy)+(data[a+dz+dy]*(1-fx)+data[a+dz+dy+dx]*fx)*fy;
+  return front*(1-fz)+back*fz;
 }
 export function labelAt(v: UsVolume, p: Vec3): number {
   if(!v.labels) return 0;
@@ -119,13 +121,18 @@ export function renderUltrasound(v:UsVolume,s:ProbeSettings,size=320):UsFrame {
   if(v.kind==='acquired'||v.kind==='phantom') {
     const width=Math.round(size*(s.probe==='linear'?50/s.depth:2*Math.sin(rad(35))));
     const pixels=new Uint8ClampedArray(width*size),labels=new Uint8Array(width*size);
+    const gain=Math.pow(10,s.gain/20),extent=s.probe==='linear'?25:s.depth*Math.sin(rad(35));
+    const origin=g.origin.map((n,i)=>(n-v.origin[i])/v.spacing[i]),across=g.across.map((n,i)=>n/v.spacing[i]),inward=g.inward.map((n,i)=>n/v.spacing[i]);
     let inside=0,total=0;
     for(let row=0;row<size;row++)for(let col=0;col<width;col++) {
-      const p=imagePoint(g,s,col,width,size,row);if(!p)continue;total++;
+      const horizontal=(col/(width-1)*2-1)*extent,vertical=row/(size-1)*s.depth;
+      if(s.probe==='curved'&&(Math.abs(Math.atan2(horizontal,vertical))>rad(35)||Math.hypot(horizontal,vertical)>s.depth))continue;
+      total++;
       if(!g.contact)continue;
-      const value=sample(v,p);if(value===null)continue;inside++;
-      pixels[row*width+col]=Math.max(0,Math.min(255,value*Math.pow(10,s.gain/20)));
-      labels[row*width+col]=labelAt(v,p);
+      const x=origin[0]+inward[0]*vertical+across[0]*horizontal,y=origin[1]+inward[1]*vertical+across[1]*horizontal,z=origin[2]+inward[2]*vertical+across[2]*horizontal;
+      const value=sampleVoxel(v,x,y,z);if(value===null)continue;inside++;
+      pixels[row*width+col]=Math.max(0,Math.min(255,value*gain));
+      if(v.labels)labels[row*width+col]=v.labels[Math.round(x)+Math.round(y)*v.dims[0]+Math.round(z)*v.dims[0]*v.dims[1]];
     }
     return {width,height:size,pixels,labels,reference:null,coverage:total?inside/total:0,ms:performance.now()-start};
   }

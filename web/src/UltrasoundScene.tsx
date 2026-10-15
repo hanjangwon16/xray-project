@@ -35,6 +35,13 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
       const mapper=own(vtkMapper.newInstance());mapper.setInputConnection(mc.getOutputPort());
       const actor=own(vtkActor.newInstance());actor.setMapper(mapper);actor.getProperty().setColor(...color);actor.getProperty().setOpacity(opacity);actor.getProperty().setAmbient(.3);renderer.addActor(actor);return actor;
     };
+    const preparedSurface=(id:number,color:Vec3,opacity:number)=>{
+      const prepared=volume.surfaces?.find(s=>s.id===id);if(!prepared)throw Error('장기 표시용 표면이 없습니다.');
+      const poly=own(vtkPolyData.newInstance());poly.getPoints().setData(prepared.points,3);poly.getPolys().setData(prepared.polys);
+      poly.getPointData().setNormals(own(vtkDataArray.newInstance({values:prepared.normals,numberOfComponents:3})));
+      const mapper=own(vtkMapper.newInstance());mapper.setInputData(poly);mapper.setScalarVisibility(false);
+      const actor=own(vtkActor.newInstance());actor.setMapper(mapper);actor.getProperty().setColor(...color);actor.getProperty().setOpacity(opacity);actor.getProperty().setAmbient(.22);actor.getProperty().setDiffuse(.75);actor.getProperty().setSpecular(.2);actor.getProperty().setSpecularPower(24);actor.getProperty().setInterpolationToPhong();renderer.addActor(actor);return actor;
+    };
     let skin:ReturnType<typeof vtkActor.newInstance>;
     if(volume.skinPoints) {
       const poly=own(vtkPolyData.newInstance());poly.getPoints().setData(volume.skinPoints,3);
@@ -44,15 +51,14 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
       const mapper=own(vtkMapper.newInstance());mapper.setInputData(poly);
       skin=own(vtkActor.newInstance());skin.setMapper(mapper);skin.getProperty().setColor(.72,.58,.47);skin.getProperty().setAmbient(.25);skin.getProperty().setDiffuse(.75);skin.getProperty().setSpecular(.15);skin.getProperty().setSpecularPower(20);renderer.addActor(skin);
     } else if(volume.kind==='acquired') {
-      const support=own(vtkImageData.newInstance({origin:volume.origin,spacing:volume.spacing}));support.setDimensions(volume.dims);
-      support.getPointData().setScalars(own(vtkDataArray.newInstance({values:Uint8Array.from(volume.data,x=>x>0?1:0),numberOfComponents:1})));
-      skin=surface(support,.5,[.66,.76,.8],.08);
+      skin=preparedSurface(0,[.66,.76,.8],.035);
     } else skin=surface(image,volume.kind==='human'?-300:50,[.66,.76,.8],volume.kind==='human'?.13:.5);
     const internal:ReturnType<typeof vtkActor.newInstance>[]=[];
     if(volume.kind!=='phantom') {
       if(volume.kind!=='acquired')internal.push(surface(image,350,[.89,.86,.75],.9));
       const structures:[number,Vec3][]=volume.kind==='acquired'?[[1,[.94,.46,.38]],[2,[.3,.85,.82]],[3,[.68,.5,.95]]]:[[5,[.78,.35,.32]],[2,[1,.64,.35]],[3,[1,.78,.4]],[1,[.65,.45,.85]],[6,[.84,.65,.43]]];
       if(volume.labels)for(const [id,color] of structures) {
+        if(volume.kind==='acquired'){internal.push(preparedSurface(id,color,1));continue;}
         const mask=own(vtkImageData.newInstance({origin:volume.origin,spacing:volume.spacing}));mask.setDimensions(volume.dims);
         mask.getPointData().setScalars(own(vtkDataArray.newInstance({values:Uint8Array.from(volume.labels,x=>x===id?1:0),numberOfComponents:1})));
         internal.push(surface(mask,.5,color,.8));
@@ -77,7 +83,7 @@ export default function UltrasoundScene({volume,settings,onChange,frozen}: {
     };
     reset.current=()=>{yaw=.15;pitch=.04;scale=span*.56;panX=panZ=0;draw();};
     focus.current=()=>{scale=Math.min(span*.56,170);panX=probeOrigin[0]-center[0];panZ=probeOrigin[2]-center[2];draw();};
-    skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='acquired'?(value?.02:.08):volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
+    skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='acquired'?(value?.008:.035):volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
     update.current=s=>{
       const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);probe.actor.setVisibility(g.contact||!!s.lifted);edges.actor.setVisibility(g.contact);marker.actor.setVisibility(g.contact||!!s.lifted);
       const pts:Vec3[]=s.probe==='linear'?[rayPoint(g,s,0,0),rayPoint(g,s,1,0),rayPoint(g,s,1,s.depth),rayPoint(g,s,0,s.depth)]:[g.origin,...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
