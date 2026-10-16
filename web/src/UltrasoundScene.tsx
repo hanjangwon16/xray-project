@@ -100,7 +100,7 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
     skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='acquired'?(value?.008:.035):volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
     update.current=s=>{
       const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);edges.actor.setVisibility(g.contact);Object.values(probeParts).forEach(part=>part.actor.setVisibility(g.contact||!!s.lifted));
-      const pts:Vec3[]=[...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,0)),...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
+      const pts:Vec3[]=[...Array.from({length:41},(_,i)=>rayPoint(g,s,s.probe==='linear'?.25+i/80:i/40,0)),...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
       const triangles:number[]=[];
       for(let i=0;i<40;i++)triangles.push(3,i,i+1,i+42,3,i,i+42,i+41);
       setMesh(fan.poly,pts,triangles);

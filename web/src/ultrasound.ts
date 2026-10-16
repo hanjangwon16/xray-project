@@ -97,7 +97,10 @@ export function beamExtent(s:ProbeSettings):number {
   return s.probe==='linear'?(s.width??50)/2:(s.width??50)/2+s.depth*Math.sin(half);
 }
 function beamSample(s:ProbeSettings,horizontal:number,vertical:number):[number,number]|null {
-  if(s.probe==='linear')return [horizontal/(s.width??50)+.5,vertical];
+  if(s.probe==='linear') {
+    const halfWidth=(s.width??50)/2*(.5+.5*vertical/s.depth);
+    return vertical<0||vertical>s.depth||Math.abs(horizontal)>halfWidth?null:[horizontal/(s.width??50)+.5,vertical];
+  }
   const half=rad((s.sectorAngle??70)/2),radius=(s.width??50)/(2*Math.sin(half));
   const angle=Math.atan2(horizontal,vertical+radius),depth=Math.hypot(horizontal,vertical+radius)-radius;
   return Math.abs(angle)>half||depth<0||depth>s.depth?null:[angle/(half*2)+.5,depth];

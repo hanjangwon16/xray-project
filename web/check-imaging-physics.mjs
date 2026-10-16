@@ -96,11 +96,21 @@ const acquiredPose={...DEFAULT_PROBE,probe:'linear',depth:55,lateral:xSum/count/
 const acquiredFrame=renderUltrasound(acquired,acquiredPose,128),acquiredGeometry=probeGeometry(acquired,acquiredPose);
 let thyroidPixels=0;
 for(let row=0;row<128;row++)for(let col=0;col<acquiredFrame.width;col++) {
-  const p=imagePoint(acquiredGeometry,acquiredPose,col,acquiredFrame.width,128,row),value=sample(acquired,p);
+  const p=imagePoint(acquiredGeometry,acquiredPose,col,acquiredFrame.width,128,row),value=p?sample(acquired,p):null;
   const expected=new Uint8ClampedArray([value??0])[0];
   assert.equal(acquiredFrame.pixels[row*acquiredFrame.width+col],expected,'Measured pixels must be interpolated source signal');
   if(acquiredFrame.labels[row*acquiredFrame.width+col]===1)thyroidPixels++;
 }
 assert.ok(thyroidPixels>100,'Default measured plane must show the thyroid');
+for(const row of [0,32,64,96,127]) {
+  let first=-1,last=-1;
+  for(let col=0;col<acquiredFrame.width;col++) {
+    const inside=imagePoint(acquiredGeometry,acquiredPose,col,acquiredFrame.width,128,row)!==null;
+    if(inside){if(first<0)first=col;last=col;}
+    else assert.equal(acquiredFrame.labels[row*acquiredFrame.width+col],0,'Cropped area must not be selectable');
+  }
+  const inset=(1-row/127)*(acquiredFrame.width-1)/4;
+  close(first,Math.ceil(inset),1.01);close(last,Math.floor(acquiredFrame.width-1-inset),1.01);
+}
 assert.deepEqual(renderUltrasound(acquired,{...acquiredPose,frequency:2,tgc:0},128).pixels,acquiredFrame.pixels,'No synthetic attenuation in acquired mode');
 console.log(JSON.stringify({passed:true,checks:['probe orthonormality and image/3D coordinates','trilinear interpolation','deterministic spatial scattering','bone shadow','frequency attenuation','gain','no-contact blank','measured constant intensity','shared Xray geometry','symmetric AP/PA','DRR thickness comparison','SegThy signal hashes and exact source interpolation','thyroid visible on default plane','no synthetic attenuation in acquired mode'],normalUsMs:normal.ms}));
