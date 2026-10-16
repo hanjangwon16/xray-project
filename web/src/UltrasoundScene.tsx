@@ -10,6 +10,7 @@ import vtkPolyData from '@kitware/vtk.js/Common/DataModel/PolyData';
 import vtkCellPicker from '@kitware/vtk.js/Rendering/Core/CellPicker';
 import {add,probeGeometry,rayPoint,type ProbeSettings,type UsVolume,type Vec3} from './ultrasound';
 import {ultrasoundColor} from './ultrasoundLabels';
+import {buildProbeMesh} from './probeMesh';
 
 type Manipulation='slide'|'rotate'|'tilt'|'rock'|'camera';
 const MODES:[Manipulation,string][]=[['slide','밀기'],['rotate','회전'],['tilt','앞뒤 기울임'],['rock','좌우 기울임'],['camera','화면 회전']];
@@ -74,7 +75,9 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
       const poly=own(vtkPolyData.newInstance()),mapper=own(vtkMapper.newInstance()),actor=own(vtkActor.newInstance());
       mapper.setInputData(poly);actor.setMapper(mapper);actor.setPickable(false);actor.getProperty().setColor(...color);actor.getProperty().setOpacity(opacity);renderer.addActor(actor);return {poly,actor};
     };
-    const fan=mesh([.27,.86,.77],.22),edges=mesh([.4,1,.88],1),probe=mesh([.88,.93,.95],1),marker=mesh([1,.78,.23],1);
+    const fan=mesh([.27,.86,.77],.22),edges=mesh([.4,1,.88],1);
+    const probeParts={body:mesh([.88,.93,.95],1),grip:mesh([.19,.26,.3],1),cable:mesh([.12,.16,.19],1),lens:mesh([.12,.2,.24],1),marker:mesh([1,.78,.23],1)};
+    for(const part of Object.values(probeParts)){part.poly.getPointData().setNormals(own(vtkDataArray.newInstance({values:new Float32Array(0),numberOfComponents:3})));part.actor.getProperty().setInterpolationToPhong();part.actor.getProperty().setAmbient(.25);part.actor.getProperty().setSpecular(.25);part.actor.getProperty().setSpecularPower(24);}
     const setMesh=(poly:ReturnType<typeof vtkPolyData.newInstance>,points:Vec3[],triangles:number[])=>{
       poly.getPoints().setData(new Float32Array(points.flat()),3);poly.getPolys().setData(new Uint32Array(triangles));poly.modified();
     };
@@ -96,7 +99,7 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
     focus.current=()=>{scale=Math.min(span*.56,170);panX=probeOrigin[0]-center[0];panZ=probeOrigin[2]-center[2];draw();};
     skinOpacity.current=value=>{skin.getProperty().setOpacity(volume.kind==='acquired'?(value?.008:.035):volume.kind==='anatomy'?(value ? .13 : 1):volume.kind==='human'?(value ? .04 : .13):.5);internal.forEach(actor=>actor.setVisibility(volume.kind!=='anatomy'||value));draw();};
     update.current=s=>{
-      const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);probe.actor.setVisibility(g.contact||!!s.lifted);edges.actor.setVisibility(g.contact);marker.actor.setVisibility(g.contact||!!s.lifted);
+      const g=probeGeometry(volume,s);probeOrigin=g.origin;fan.actor.setVisibility(g.contact);edges.actor.setVisibility(g.contact);Object.values(probeParts).forEach(part=>part.actor.setVisibility(g.contact||!!s.lifted));
       const pts:Vec3[]=[...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,0)),...Array.from({length:41},(_,i)=>rayPoint(g,s,i/40,s.depth))];
       const triangles:number[]=[];
       for(let i=0;i<40;i++)triangles.push(3,i,i+1,i+42,3,i,i+42,i+41);
@@ -105,10 +108,13 @@ export default function UltrasoundScene({volume,settings,onChange,frozen,focusRe
       const boundary=[...Array.from({length:41},(_,i)=>i),...Array.from({length:41},(_,i)=>81-i),0];
       edges.poly.getLines().setData(new Uint32Array([boundary.length,...boundary]));edges.poly.modified();
       const glyphScale=volume.kind==='acquired'?.2:1;
-      const box=(offset:number,width:number,thickness:number,length:number):Vec3[]=>[-1,1].flatMap(d=>[-1,1].flatMap(n=>[-1,1].map(a=>add(add(add(g.origin,g.inward,(offset+d*length)*glyphScale),g.normal,n*thickness*glyphScale),g.across,a*width*glyphScale))));
-      const faces=[3,0,1,3,3,0,3,2,3,4,6,7,3,4,7,5,3,0,4,5,3,0,5,1,3,2,3,7,3,2,7,6,3,0,2,6,3,0,6,4,3,1,5,7,3,1,7,3];
-      setMesh(probe.poly,box(-14,(s.width??50)/2,6,13),faces);
-      setMesh(marker.poly,box(-27,3,6.5,1).map(p=>add(p,g.across,-13*glyphScale)),faces);draw();
+      const shapes=buildProbeMesh(s.probe,s.width??50,s.sectorAngle??70);
+      for(const key of Object.keys(probeParts) as (keyof typeof probeParts)[]){
+        const shape=shapes[key],part=probeParts[key];
+        setMesh(part.poly,shape.points.map(([a,n,d])=>add(add(add(g.origin,g.across,a*glyphScale),g.normal,n*glyphScale),g.inward,d*glyphScale)),shape.polys);
+        part.poly.getPointData().getNormals().setData(new Float32Array(shape.normals.flatMap(([a,n,d])=>g.across.map((x,i)=>x*a+g.normal[i]*n+g.inward[i]*d))),3);
+      }
+      draw();
     };
     const pick=(x:number,y:number)=>{
       if(interaction.current.frozen)return;
